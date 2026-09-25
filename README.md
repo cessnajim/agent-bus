@@ -18,7 +18,11 @@ Publish is part of **done** for catalog topics. After a successful side effect (
 
 Day ledger audits live reality vs `events/YYYY-MM-DD.jsonl` and backfills misses.
 
-`events/YYYY-MM-DD.jsonl` is the record. On a real publish, each subscriber also gets one line in `notify/<slug>/YYYY-MM-DD.jsonl`. That inbox is what the next session reads at start. The slug is the catalog name lowercased, with spaces turned into hyphens (`FTE Apply` → `fte-apply`). Wake is optional and best-effort: a `wake` command on a subscriber object, or a topic `wake` field for a string subscriber, receives the notify line on stdin (5s timeout). A non-zero exit or timeout leaves the event and the notify line in place. With no `wake` field, the file is the whole delivery.
+`events/YYYY-MM-DD.jsonl` is the record. A key is unique per topic across days: the same `(topic, idempotency_key)` on a later day returns `status=duplicate` and writes nothing. Daily work is a new event with a new key.
+
+On a real publish, each subscriber gets one line in `notify/<slug>/YYYY-MM-DD.jsonl`. That inbox is what the next session reads at start. The slug is the catalog name lowercased, with spaces turned into hyphens (`FTE Apply` → `fte-apply`). Wake is optional and best-effort: a subscriber `wake` string (or a topic `wake` field for a string subscriber) receives the notify line on stdin, with a 5s timeout. A non-zero exit or timeout leaves the event and the notify line in place. With no `wake` field, the file is the whole delivery.
+
+`busctl audit` checks the log against the state snapshots and the catalog. It cannot see Ashby, Adobe Contributor, or the GE tracker. The day ledger still compares the log to live reality. `busctl rebuild` prints the snapshot diff; `--write` replaces state files from a fold of the log.
 
 ## Live topics (catalog)
 Employment / WS: `fte.submit`, `fte.reject`, `fte.hold_cleared`, `critic.pass`, `catalant.email_confirmed`, `catalant.pitch_submitted`, `ws.short_of_target`, `ge.synced`
@@ -40,6 +44,9 @@ Admin owns catalog adds. Publish is part of done.
 ~/Projects/agent-bus/bin/busctl.py topics
 ~/Projects/agent-bus/bin/busctl.py state ws
 ~/Projects/agent-bus/bin/busctl.py today --topic fte.submit
+~/Projects/agent-bus/bin/busctl.py audit
+~/Projects/agent-bus/bin/busctl.py rebuild
+~/Projects/agent-bus/bin/busctl.py rebuild --write
 ```
 
 MCP stays for I/O. This bus is coordination after I/O succeeds.

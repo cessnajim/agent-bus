@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Publish one event to the agent topic bus (Fedora). Idempotent on (topic, key) per day.
+"""Publish one event to the agent topic bus (Fedora).
 
+Idempotent on (topic, idempotency_key) across every events/*.jsonl.
 A real append also writes notify/<slug>/YYYY-MM-DD.jsonl per subscriber.
 Optional wake commands are best-effort and do not roll back the publish.
 """
@@ -24,6 +25,9 @@ NOTIFY = ROOT / "notify"
 LOCK = ROOT / ".publish.lock"
 NOTE_MAX = 400
 WAKE_TIMEOUT_S = 5
+# Top-level mirrors. refs win first, then state_delta on the same key.
+PROMOTE_KEYS = ("submitted", "target", "date", "holds", "submitted_on_count", "email", "band")
+MANAGED_KEYS = frozenset({"topic", "updated_at", "last_key", "last_actor", "refs", "state", *PROMOTE_KEYS})
 
 
 def parse_kv(items):
@@ -39,20 +43,6 @@ def parse_kv(items):
         else:
             out[k] = v
     return out
-
-
-def load_day_events(path: Path) -> list[dict]:
-    if not path.exists():
-        return []
-    rows = []
-    for i, line in enumerate(path.read_text().splitlines(), 1):
-        if not line.strip():
-            continue
-        try:
-            rows.append(json.loads(line))
-        except json.JSONDecodeError as e:
-            raise SystemExit(f"corrupt jsonl {path}:{i}: {e}") from e
-    return rows
 
 
 def load_state(path: Path) -> dict:
@@ -71,8 +61,85 @@ def atomic_write_json(path: Path, data: dict) -> None:
     os.replace(tmp, path)
 
 
+def apply_event(cur: dict, event: dict) -> dict:
+    """Fold one event into a snapshot.
+
+    refs are replaced by this event. state merges this delta.
+    Promoted keys mirror refs, then the delta. Every other key is left alone.
+    """
+    refs = event.get("refs") if isinstance(event.get("refs"), dict) else {}
+    delta = event.get("state_delta") if isinstance(event.get("state_delta"), dict) else {}
+    refs = dict(refs)
+    delta = dict(delta)
+    cur.update({
+        "topic": event.get("topic"),
+        "updated_at": event.get("ts"),
+        "last_key": event.get("idempotency_key"),
+        "last_actor": event.get("actor"),
+        "refs": refs,
+    })
+    state = cur.get("state")
+    if not isinstance(state, dict):
+        state = {}
+        cur["state"] = state
+    state.update(delta)
+    for k in PROMOTE_KEYS:
+        if k in refs:
+            cur[k] = refs[k]
+        if k in delta:
+            cur[k] = delta[k]
+    return cur
+
+
+def fold_events(existing: dict | None, events: list[dict]) -> dict:
+    """Replay events onto preserved hand fields. Publish and rebuild both use apply_event."""
+    cur = {k: v for k, v in (existing or {}).items() if k not in MANAGED_KEYS}
+    for ev in events:
+        apply_event(cur, ev)
+    return cur
+
+
+def read_event_lines(events_dir: Path) -> list[tuple[Path, int, dict]]:
+    """Events in date order, then filename, then line order."""
+    rows: list[tuple[Path, int, dict]] = []
+    if not events_dir.exists():
+        return rows
+    paths = sorted((p for p in events_dir.glob("*.jsonl") if p.is_file()), key=lambda p: (p.stem, p.name))
+    for path in paths:
+        if not path.exists():
+            continue
+        for i, line in enumerate(path.read_text().splitlines(), 1):
+            if not line.strip():
+                continue
+            try:
+                rows.append((path, i, json.loads(line)))
+            except json.JSONDecodeError as e:
+                raise SystemExit(f"corrupt jsonl {path}:{i}: {e}") from e
+    return rows
+
+
+def find_duplicate(topic: str, key: str) -> tuple[Path, dict] | None:
+    for path, _lineno, prev in read_event_lines(EVENTS):
+        if prev.get("topic") == topic and prev.get("idempotency_key") == key:
+            return path, prev
+    return None
+
+
 def subscriber_slug(name: str) -> str:
     return name.lower().replace(" ", "-")
+
+
+def subscriber_name(sub) -> str:
+    if isinstance(sub, str):
+        if not sub.strip():
+            raise SystemExit("subscriber name is empty")
+        return sub
+    if isinstance(sub, dict):
+        name = sub.get("name")
+        if not isinstance(name, str) or not name.strip():
+            raise SystemExit(f"subscriber object missing name: {sub!r}")
+        return name
+    raise SystemExit(f"bad subscriber: {sub!r}")
 
 
 def notify_inbox(name: str, day: str) -> Path:
@@ -88,20 +155,13 @@ def wake_command_for(sub, meta: dict) -> tuple[str, str | None]:
     A subscriber object may carry `wake`. A string subscriber uses the optional
     topic field `wake` (a command string, or a map of name → command).
     """
+    name = subscriber_name(sub)
     if isinstance(sub, dict):
-        name = sub.get("name")
-        if not isinstance(name, str) or not name.strip():
-            raise SystemExit(f"subscriber object missing name: {sub!r}")
         wake = sub.get("wake")
-    elif isinstance(sub, str):
-        if not sub.strip():
-            raise SystemExit("subscriber name is empty")
-        name = sub
+    else:
         wake = meta.get("wake")
         if isinstance(wake, dict):
             wake = wake.get(name)
-    else:
-        raise SystemExit(f"bad subscriber: {sub!r}")
 
     if wake is None:
         return name, None
@@ -223,10 +283,12 @@ def main() -> int:
     with LOCK.open("a") as lockf:
         fcntl.flock(lockf, fcntl.LOCK_EX)
         try:
-            for prev in load_day_events(path):
-                if prev.get("idempotency_key") == args.key and prev.get("topic") == args.topic:
-                    print(json.dumps({"status": "duplicate", "path": str(path), "event": prev}, indent=2))
-                    return 0
+            # One flock covers the cross-day key scan and the writes that follow.
+            hit = find_duplicate(args.topic, args.key)
+            if hit:
+                found, prev = hit
+                print(json.dumps({"status": "duplicate", "path": str(found), "event": prev}, indent=2))
+                return 0
 
             # Fail closed on corrupt state BEFORE appending the event.
             cur = load_state(state_path) if state_path else None
@@ -247,20 +309,7 @@ def main() -> int:
                 # topic / last_key / updated_at / last_actor = last event on this file.
                 # refs = last event only (jsonl is the audit; no bag merge across topics).
                 # Hand fields outside this merge stay until updated in the same turn as publish.
-                cur.update({
-                    "topic": args.topic,
-                    "updated_at": event["ts"],
-                    "last_key": args.key,
-                    "last_actor": args.actor,
-                    "refs": refs,
-                })
-                cur.setdefault("state", {}).update(event["state_delta"])
-                # Top-level mirrors: refs first, then state_delta so delta wins on conflict.
-                for k in ("submitted", "target", "date", "holds", "submitted_on_count", "email", "band"):
-                    if k in refs:
-                        cur[k] = refs[k]
-                    if k in event["state_delta"]:
-                        cur[k] = event["state_delta"][k]
+                apply_event(cur, event)
                 atomic_write_json(state_path, cur)
 
             # Inbox poke only. The day jsonl stays the record.
