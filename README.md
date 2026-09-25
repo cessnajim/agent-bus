@@ -42,6 +42,13 @@ Admin owns catalog adds. Publish is part of done.
 
 MCP stays for I/O. This bus is coordination after I/O succeeds.
 
+## Publish rules
+
+- Notes over 400 characters are rejected.
+- Snapshot `refs` on a state file are the last event for that file only (not a merge).
+- The day jsonl under `events/` is the audit log; it is append-only.
+- Hand fields on a state file are not updated by publish; they stay until edited by hand.
+
 ## Live switchboard
 ```bash
 python3 ~/Projects/agent-bus/viz/server.py
