@@ -1,0 +1,245 @@
+{
+  "version": 1,
+  "owner": "Admin",
+  "rules": {
+    "new_topic": "Admin only. Add when >=2 subscribers, recurring, and done_means is nameable. No mid-turn invention.",
+    "mandate": "Publish is part of done for catalog topics. Day ledger audits jsonl vs reality and backfills misses.",
+    "dms": "After publish, DM subscribers listed on the topic. Bus is source of truth; DMs are best-effort push."
+  },
+  "topics": {
+    "fte.submit": {
+      "description": "FTE application submitted with receipt",
+      "publishers": [
+        "FTE Apply",
+        "Admin"
+      ],
+      "subscribers": [
+        "Admin",
+        "Unemployment",
+        "Ops"
+      ],
+      "required_refs": [
+        "company",
+        "role",
+        "source_id",
+        "packet_path"
+      ],
+      "state_file": "ws",
+      "done_means": "GE tracker+canvas synced and WS proof logged for claim week"
+    },
+    "fte.reject": {
+      "description": "FTE application rejected or lost",
+      "publishers": [
+        "Admin",
+        "Ops",
+        "FTE Apply"
+      ],
+      "subscribers": [
+        "Admin",
+        "Unemployment",
+        "Ops",
+        "Writing Critic"
+      ],
+      "required_refs": [
+        "company",
+        "role",
+        "source_id"
+      ],
+      "state_file": null,
+      "done_means": "GE lost + reject learning loop + archive checked mail"
+    },
+    "fte.hold_cleared": {
+      "description": "Jim cleared a hold blocking FTE submit or chase",
+      "publishers": [
+        "Admin"
+      ],
+      "subscribers": [
+        "FTE Apply",
+        "Admin"
+      ],
+      "required_refs": [
+        "company",
+        "role",
+        "hold_reason"
+      ],
+      "state_file": "ws",
+      "done_means": "Owning agent resumed the concrete unfinished step"
+    },
+    "critic.pass": {
+      "description": "Writing Critic PASS on a packet",
+      "publishers": [
+        "Writing Critic",
+        "Admin"
+      ],
+      "subscribers": [
+        "FTE Apply",
+        "Admin"
+      ],
+      "required_refs": [
+        "company",
+        "role",
+        "packet_path"
+      ],
+      "state_file": null,
+      "done_means": "Submit under standing apply-auth or Jim yes executed"
+    },
+    "catalant.email_confirmed": {
+      "description": "Catalant preferred-email confirm clicked",
+      "publishers": [
+        "Ops",
+        "Admin"
+      ],
+      "subscribers": [
+        "Investment",
+        "Admin"
+      ],
+      "required_refs": [
+        "email"
+      ],
+      "state_file": "catalant",
+      "done_means": "Investment knows preferred email is live; no further Resend loops"
+    },
+    "catalant.pitch_submitted": {
+      "description": "Catalant pitch submitted under send-auth",
+      "publishers": [
+        "Investment",
+        "Admin"
+      ],
+      "subscribers": [
+        "Admin",
+        "Investment"
+      ],
+      "required_refs": [
+        "opportunity_id",
+        "band"
+      ],
+      "state_file": "catalant",
+      "done_means": "Pitch id logged; day ledger cash path updated"
+    },
+    "ws.short_of_target": {
+      "description": "Work Seeking count below daily target",
+      "publishers": [
+        "Admin",
+        "day-ledger"
+      ],
+      "subscribers": [
+        "FTE Apply",
+        "Admin"
+      ],
+      "required_refs": [
+        "date",
+        "submitted",
+        "target"
+      ],
+      "state_file": "ws",
+      "done_means": "FTE Apply harvesting or honest empty inventory recorded"
+    },
+    "ge.synced": {
+      "description": "Fedora GE tracker+canvas reconciled after submit/reject",
+      "publishers": [
+        "Admin"
+      ],
+      "subscribers": [
+        "Admin"
+      ],
+      "required_refs": [
+        "submitted_on_count"
+      ],
+      "state_file": "ge",
+      "done_means": "reconcile_dashboard.py exit 0"
+    },
+    "adobe.batch_submitted": {
+      "description": "Immich/DAM batch uploaded to Adobe Stock Contributor and is In review (non-exclusive RF; heroes off Stock)",
+      "publishers": [
+        "Marketing",
+        "Admin"
+      ],
+      "subscribers": [
+        "Admin",
+        "Marketing",
+        "Ops"
+      ],
+      "required_refs": [
+        "batch_id",
+        "file_count",
+        "theme"
+      ],
+      "state_file": "adobe",
+      "done_means": "Contributor shows In review for the batch; day ledger notes pending review"
+    },
+    "adobe.review_logged": {
+      "description": "Adobe Stock review email (or Contributor scrape) logged to the fail-log with counts",
+      "publishers": [
+        "Admin",
+        "Ops"
+      ],
+      "subscribers": [
+        "Admin",
+        "Marketing"
+      ],
+      "required_refs": [
+        "date",
+        "accepted",
+        "rejected",
+        "log_path"
+      ],
+      "state_file": "adobe",
+      "done_means": "Row appended to adobe-stock rejections fail-log; if rejected>0 and verbatim reasons missing, state.reasons_pending=true"
+    },
+    "adobe.reject_reasons_captured": {
+      "description": "Verbatim Contributor reject reasons scraped; harvest gates updated",
+      "publishers": [
+        "Admin",
+        "Marketing"
+      ],
+      "subscribers": [
+        "Admin",
+        "Marketing"
+      ],
+      "required_refs": [
+        "date",
+        "rejected_count",
+        "top_tags"
+      ],
+      "state_file": "adobe",
+      "done_means": "Verbatim reasons in fail-log; state.reasons_pending=false; next DAM upload unblocked on reason gap"
+    },
+    "shop.order_received": {
+      "description": "outandaboutwithjim.com / Stripe shop order received",
+      "publishers": [
+        "Ops",
+        "Admin"
+      ],
+      "subscribers": [
+        "Admin",
+        "Sales",
+        "Marketing"
+      ],
+      "required_refs": [
+        "order_id",
+        "sku",
+        "amount"
+      ],
+      "state_file": "shop",
+      "done_means": "Ops acknowledged; Sales pinged if print/extended/exclusive"
+    },
+    "shop.exclusive_draft_ready": {
+      "description": "Sales exclusive/print/extended outreach draft ready for Jim yes (never auto-send)",
+      "publishers": [
+        "Sales",
+        "Admin"
+      ],
+      "subscribers": [
+        "Admin",
+        "Sales"
+      ],
+      "required_refs": [
+        "prospect",
+        "asset",
+        "draft_path"
+      ],
+      "state_file": "shop",
+      "done_means": "Admin surfaced draft to Jim for send/discard; nothing sent without Jim yes"
+    }
+  }
+}

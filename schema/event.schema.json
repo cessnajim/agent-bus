@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AgentBusEvent",
+  "type": "object",
+  "required": [
+    "topic",
+    "ts",
+    "idempotency_key",
+    "actor",
+    "refs",
+    "state_delta"
+  ],
+  "properties": {
+    "topic": {
+      "type": "string"
+    },
+    "ts": {
+      "type": "string"
+    },
+    "idempotency_key": {
+      "type": "string"
+    },
+    "actor": {
+      "type": "string"
+    },
+    "refs": {
+      "type": "object"
+    },
+    "state_delta": {
+      "type": "object"
+    },
+    "note": {
+      "type": "string",
+      "maxLength": 400
+    }
+  },
+  "additionalProperties": false
+}

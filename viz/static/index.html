@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Agent Bus — Live Switchboard</title>
+<style>
+:root{
+  --bg:#07090f;--ink:#e8eefc;--muted:#8b97b3;--dim:#5a6785;
+  --line:rgba(120,150,200,.14);--cyan:#3de0ff;--amber:#ffb020;
+  --magenta:#ff4d9a;--lime:#7dffb3;--violet:#9b7bff;--rose:#ff6b6b;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);
+  font:13px/1.45 "IBM Plex Sans","Segoe UI",system-ui,sans-serif;overflow:hidden}
+body{background-image:
+  radial-gradient(1200px 600px at 10% -10%,rgba(61,224,255,.08),transparent 55%),
+  radial-gradient(900px 500px at 95% 10%,rgba(155,123,255,.07),transparent 50%),
+  radial-gradient(800px 400px at 50% 110%,rgba(255,77,154,.05),transparent 50%)}
+.shell{display:grid;grid-template-rows:auto 1fr auto;height:100%;gap:10px;padding:12px 14px}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  padding:8px 12px;border:1px solid var(--line);border-radius:12px;
+  background:linear-gradient(180deg,rgba(18,26,42,.9),rgba(10,14,22,.7))}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand h1{margin:0;font-size:15px;letter-spacing:.04em}
+.brand .sub{color:var(--muted);font-size:11px}
+.live{display:inline-flex;align-items:center;gap:7px;padding:4px 10px;border-radius:999px;
+  border:1px solid rgba(61,224,255,.35);background:rgba(61,224,255,.08);color:var(--cyan);
+  font-size:11px;font-weight:600}
+.live .dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);
+  box-shadow:0 0 0 0 rgba(61,224,255,.7);animation:pulse 1.6s infinite}
+.live.stale{color:var(--amber);border-color:rgba(255,176,32,.4);background:rgba(255,176,32,.08)}
+.live.stale .dot{background:var(--amber);animation:none}
+.live.dead{color:var(--rose);border-color:rgba(255,107,107,.4);background:rgba(255,107,107,.08)}
+.live.dead .dot{background:var(--rose);animation:none}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(61,224,255,.55)}70%{box-shadow:0 0 0 9px transparent}}
+.meta{display:flex;gap:14px;color:var(--muted);font-variant-numeric:tabular-nums;font-size:11px}
+.meta strong{color:var(--ink)}
+.main{display:grid;grid-template-columns:1.15fr .85fr;gap:10px;min-height:0}
+@media(max-width:1100px){.main{grid-template-columns:1fr}body{overflow:auto}.shell{height:auto;min-height:100%}}
+.panel{border:1px solid var(--line);border-radius:14px;background:rgba(14,20,32,.82);
+  display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:10px 14px 8px;border-bottom:1px solid var(--line)}
+.ph h2{margin:0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.ph .hint{color:var(--dim);font-size:11px}
+.pb{flex:1;min-height:0;position:relative}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px 12px}
+.kpi{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#0b1220}
+.kpi .lbl{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+.kpi .val{font-size:22px;font-weight:650;margin-top:2px;font-variant-numeric:tabular-nums}
+.kpi .hint{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sky{width:100%;height:100%;display:block}
+.legend{position:absolute;left:12px;bottom:10px;display:flex;flex-wrap:wrap;gap:8px;max-width:72%}
+.chip{font-size:10px;padding:3px 8px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.35);color:var(--muted)}
+.river{overflow:auto;padding:8px 10px 14px;display:flex;flex-direction:column;gap:8px}
+.evt{border:1px solid var(--line);border-radius:12px;padding:10px 12px;
+  background:linear-gradient(135deg,rgba(18,26,42,.95),rgba(10,14,22,.75));animation:in .35s ease}
+.evt.flash{box-shadow:0 0 0 1px var(--flash,var(--cyan)),0 0 24px color-mix(in srgb,var(--flash,var(--cyan)) 35%,transparent)}
+@keyframes in{from{opacity:0;transform:translateY(-8px) scale(.98)}to{opacity:1;transform:none}}
+.evt-top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.tag{font-size:11px;font-weight:650;padding:2px 8px;border-radius:6px;background:rgba(255,255,255,.04)}
+.ts{color:var(--dim);font-size:10px;font-variant-numeric:tabular-nums}
+.actor{color:var(--muted);font-size:11px;margin-top:4px}.actor span{color:var(--ink)}
+.refs{margin-top:6px;display:flex;flex-wrap:wrap;gap:5px}
+.ref{font-size:10px;color:var(--muted);background:rgba(255,255,255,.03);border:1px solid var(--line);
+  border-radius:6px;padding:2px 6px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ref b{color:var(--ink);font-weight:500}
+.note{margin-top:6px;color:var(--muted);font-size:11px;font-style:italic}
+footer{display:grid;grid-template-columns:1.2fr .8fr;gap:10px;min-height:120px}
+.silence,.actors{padding:10px 12px}
+.bars{display:flex;gap:6px;align-items:flex-end;height:54px;margin-top:6px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.bar{width:100%;border-radius:6px 6px 2px 2px;min-height:3px;transition:height .4s}
+.bar-lbl{font-size:9px;color:var(--dim);width:100%;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.actor-rows{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.actor-row{display:grid;grid-template-columns:110px 1fr 28px;gap:8px;align-items:center}
+.actor-row .name{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.actor-row .track{height:8px;background:rgba(255,255,255,.04);border-radius:99px;overflow:hidden}
+.actor-row .fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--violet),var(--cyan))}
+.actor-row .n{text-align:right;font-variant-numeric:tabular-nums}
+.empty{color:var(--dim);padding:24px;text-align:center;font-size:12px}
+.burst{position:absolute;pointer-events:none;width:12px;height:12px;border-radius:50%;
+  opacity:.9;transform:translate(-50%,-50%);animation:burst .9s ease-out forwards;z-index:5}
+@keyframes burst{to{opacity:0;transform:translate(-50%,-50%) scale(6)}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <div class="brand">
+      <h1>Agent Bus</h1>
+      <span class="sub">live switchboard · topic constellation · day ledger</span>
+    </div>
+    <div class="live" id="live"><span class="dot"></span><span id="liveLabel">connecting</span></div>
+    <div class="meta">
+      <div>day <strong id="day">—</strong></div>
+      <div>events <strong id="evtCount">0</strong></div>
+      <div>updated <strong id="updated">—</strong></div>
+    </div>
+  </header>
+  <div class="main">
+    <section class="panel">
+      <div class="ph"><h2>Constellation</h2><span class="hint">publishers → topics → subscribers</span></div>
+      <div class="kpis" id="kpis"></div>
+      <div class="pb" id="skyWrap" style="height:min(52vh,480px)">
+        <svg id="sky"></svg>
+        <div class="legend" id="legend"></div>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="ph"><h2>Event river</h2><span class="hint">newest first · flashes on publish</span></div>
+      <div class="pb river" id="river"></div>
+    </section>
+  </div>
+  <footer>
+    <section class="panel silence">
+      <div class="ph" style="border:0;padding:0 0 4px"><h2>Silence radar</h2>
+        <span class="hint">taller = quieter (hours since last publish)</span></div>
+      <div class="bars" id="silence"></div>
+    </section>
+    <section class="panel actors">
+      <div class="ph" style="border:0;padding:0 0 4px"><h2>Actor heat</h2>
+        <span class="hint">who published today</span></div>
+      <div class="actor-rows" id="actors"></div>
+    </section>
+  </footer>
+</div>
+<script>
+(() => {
+  const FIXED = {
+    'fte.submit':'#3de0ff',
+    'fte.reject':'#ff6b6b',
+    'fte.hold_cleared':'#ffb020',
+    'critic.pass':'#7dffb3',
+    'catalant.email_confirmed':'#ffb020',
+    'catalant.pitch_submitted':'#ff9f43',
+    'ws.short_of_target':'#ff4d9a',
+    'ge.synced':'#9b7bff'
+  };
+  const palette = ['#3de0ff','#9b7bff','#7dffb3','#ffb020','#ff4d9a','#5ad1ff','#c4a7ff','#ff8fab'];
+  const colorFor = (t) => {
+    if (FIXED[t]) return FIXED[t];
+    let h=0; for (let i=0;i<t.length;i++) h=(h*31+t.charCodeAt(i))>>>0;
+    return palette[h%palette.length];
+  };
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const fmtTime = (iso) => {
+    if (!iso) return '—';
+    try { return new Date(iso).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+    catch { return iso; }
+  };
+  const eventKey = (ev) => ev.idempotency_key || `${ev.topic}|${ev.ts}|${ev.actor||''}`;
+  const hoursSince = (iso) => {
+    if (!iso) return Infinity;
+    return Math.max(0, (Date.now() - new Date(iso).getTime()) / 3600000);
+  };
+  const fp = (s) => `${s.generated_at}|${s.stats.event_count}|${Object.keys(s.state||{}).sort().join(',')}`;
+
+  let known = new Set();
+  let lastFp = '';
+  let lastMsg = Date.now();
+  let lastPos = {};
+
+  function setLive(st, text){
+    const el=$('live'); el.classList.remove('stale','dead');
+    if (st==='stale') el.classList.add('stale');
+    if (st==='dead') el.classList.add('dead');
+    $('liveLabel').textContent = text;
+  }
+
+  function renderKpis(snap){
+    const st=snap.state||{};
+    const ws=st.ws||{}, ge=st.ge||{}, cat=st.catalant||{};
+    const submitted = ws.submitted ?? ws.state?.submitted ?? '—';
+    const target = ws.target ?? ws.state?.target ?? '—';
+    const geCount = ge.submitted_on_count ?? ge.state?.submitted_on_count ?? '—';
+    const band = cat.band || cat.refs?.band || '—';
+    const opp = cat.refs?.opportunity_id || '—';
+    const n = snap.stats.event_count||0;
+    const evs = snap.events||[];
+    let rate='—';
+    if (evs.length>1){
+      const hrs=Math.max(0.01,(new Date(evs[evs.length-1].ts)-new Date(evs[0].ts))/3600000);
+      rate=(n/hrs).toFixed(1)+'/h';
+    } else if (n) rate = n+' today';
+    $('kpis').innerHTML = `
+      <div class="kpi"><div class="lbl">Work Seeking</div><div class="val">${esc(submitted)}<span style="color:var(--dim);font-size:14px"> / ${esc(target)}</span></div><div class="hint">daily submit target</div></div>
+      <div class="kpi"><div class="lbl">GE synced</div><div class="val">${esc(geCount)}</div><div class="hint">submitted_on count</div></div>
+      <div class="kpi"><div class="lbl">Catalant</div><div class="val" style="font-size:16px;margin-top:6px">${esc(band)}</div><div class="hint">last opp ${esc(opp)}</div></div>
+      <div class="kpi"><div class="lbl">Bus tempo</div><div class="val" style="font-size:18px;margin-top:4px">${esc(rate)}</div><div class="hint">${n} events · ${Object.keys(snap.catalog?.topics||{}).length} topics</div></div>`;
+  }
+
+  function renderRiver(snap, flashKeys){
+    const river=$('river');
+    const events=[...(snap.events||[])].reverse();
+    if (!events.length){
+      river.innerHTML=`<div class="empty">No events yet for ${esc(snap.day)}. Publish and the river fills itself.</div>`;
+      return;
+    }
+    river.innerHTML = events.map(ev=>{
+      const c=colorFor(ev.topic);
+      const key=eventKey(ev);
+      const flash=flashKeys?.has(key);
+      const refs=Object.entries(ev.refs||{}).slice(0,6)
+        .map(([k,v])=>`<span class="ref"><b>${esc(k)}</b> ${esc(v)}</span>`).join('');
+      return `<article class="evt${flash?' flash':''}" style="--flash:${c}">
+        <div class="evt-top">
+          <span class="tag" style="color:${c};border:1px solid color-mix(in srgb, ${c} 45%, transparent)">${esc(ev.topic)}</span>
+          <span class="ts">${fmtTime(ev.ts)}</span>
+        </div>
+        <div class="actor">actor <span>${esc(ev.actor||'?')}</span></div>
+        ${refs?`<div class="refs">${refs}</div>`:''}
+        ${ev.note?`<div class="note">${esc(ev.note)}</div>`:''}
+      </article>`;
+    }).join('');
+    if (flashKeys && flashKeys.size) river.scrollTop = 0;
+  }
+
+  function renderSilence(snap){
+    const topics=Object.keys(snap.catalog?.topics||{});
+    const last=snap.stats.last_by_topic||{};
+    const hours=topics.map(t=>({t,h:hoursSince(last[t])}));
+    const finite=hours.map(x=>Number.isFinite(x.h)?x.h:0);
+    const maxH=Math.max(1,...finite,1);
+    $('silence').innerHTML = hours.map(({t,h})=>{
+      const quiet=!Number.isFinite(h);
+      const hh=quiet?maxH:h;
+      const pct=Math.min(100,(hh/maxH)*100);
+      const c=colorFor(t);
+      const label=quiet?'never':(h<1?`${Math.round(h*60)}m`:`${h.toFixed(1)}h`);
+      return `<div class="bar-col" title="${esc(t)}: ${label}">
+        <div class="bar" style="height:${Math.max(6,pct)}%;background:${c};opacity:${quiet?0.35:0.85}"></div>
+        <div class="bar-lbl">${esc(t.split('.').pop())}</div>
+      </div>`;
+    }).join('') || `<div class="empty">No topics in catalog</div>`;
+  }
+
+  function renderActors(snap){
+    const counts=snap.stats.actor_counts||{};
+    const rows=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+    const max=Math.max(1,...rows.map(r=>r[1]));
+    $('actors').innerHTML = rows.map(([name,n])=>`
+      <div class="actor-row">
+        <div class="name">${esc(name)}</div>
+        <div class="track"><div class="fill" style="width:${(n/max)*100}%"></div></div>
+        <div class="n">${n}</div>
+      </div>`).join('') || `<div class="empty">No actors yet</div>`;
+  }
+
+  function layoutGraph(snap){
+    const svg=$('sky'), wrap=$('skyWrap');
+    const W=wrap.clientWidth||640, H=wrap.clientHeight||420;
+    svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+    svg.setAttribute('width',W); svg.setAttribute('height',H);
+    const topics=snap.catalog?.topics||{};
+    const topicNames=Object.keys(topics);
+    const volumes=snap.stats.topic_volumes||{};
+    const agents=new Set();
+    topicNames.forEach(t=>{
+      (topics[t].publishers||[]).forEach(a=>agents.add(a));
+      (topics[t].subscribers||[]).forEach(a=>agents.add(a));
+    });
+    const agentList=[...agents].sort();
+    const pos={};
+    const cx=W*0.52, cy=H*0.52;
+    const rx=Math.min(W,H)*0.28, ry=Math.min(W,H)*0.34;
+    topicNames.forEach((t,i)=>{
+      const a=(i/Math.max(1,topicNames.length))*Math.PI*2-Math.PI/2;
+      pos[t]={x:cx+Math.cos(a)*rx,y:cy+Math.sin(a)*ry};
+    });
+    agentList.forEach((a,i)=>{
+      const left=i%2===0;
+      const idx=Math.floor(i/2);
+      const n=Math.ceil(agentList.length/2)||1;
+      const y=(H*0.18)+(idx/Math.max(1,n-1||1))*(H*0.64);
+      pos[a]={x:left?W*0.1:W*0.9,y,left};
+    });
+    const lines=[];
+    topicNames.forEach(t=>{
+      const meta=topics[t], c=colorFor(t);
+      (meta.publishers||[]).forEach(p=>{ if(pos[p]&&pos[t]) lines.push({from:p,to:t,color:c,kind:'pub'}); });
+      (meta.subscribers||[]).forEach(s=>{ if(pos[s]&&pos[t]) lines.push({from:t,to:s,color:c,kind:'sub'}); });
+    });
+    const maxVol=Math.max(1,...Object.values(volumes),1);
+    const edges=lines.map(l=>{
+      const a=pos[l.from], b=pos[l.to];
+      const mid=(a.y+b.y)/2+(l.kind==='pub'?-12:12);
+      return `<path d="M${a.x},${a.y} Q${(a.x+b.x)/2},${mid} ${b.x},${b.y}" fill="none"
+        stroke="${l.color}" stroke-opacity="${l.kind==='pub'?0.45:0.22}" stroke-width="${l.kind==='pub'?1.6:1}"/>`;
+    }).join('');
+    let nodes=agentList.map(a=>{
+      const p=pos[a];
+      return `<g transform="translate(${p.x},${p.y})">
+        <circle r="5" fill="#1a2336" stroke="#5a6785" stroke-width="1.2"/>
+        <text y="4" x="${p.left?-10:10}" text-anchor="${p.left?'end':'start'}" fill="#8b97b3" font-size="10">${esc(a)}</text>
+      </g>`;
+    }).join('');
+    nodes+=topicNames.map(t=>{
+      const p=pos[t], v=volumes[t]||0, r=10+(v/maxVol)*14, c=colorFor(t);
+      const glow=v>0?`<circle r="${r+8}" fill="${c}" opacity="0.12"/>`:'';
+      return `<g transform="translate(${p.x},${p.y})">${glow}
+        <circle r="${r}" fill="#0b1220" stroke="${c}" stroke-width="2"/>
+        <circle r="3" fill="${c}"/>
+        <text y="${r+14}" text-anchor="middle" fill="${c}" font-size="10" font-weight="600">${esc(t)}</text>
+        <text y="4" text-anchor="middle" fill="#e8eefc" font-size="10" font-weight="700">${v||''}</text>
+      </g>`;
+    }).join('');
+    svg.innerHTML=`<g id="edges">${edges}</g><g id="nodes">${nodes}</g>`;
+    $('legend').innerHTML=topicNames.map(t=>
+      `<span class="chip"><b style="color:${colorFor(t)}">●</b> ${esc(t)} · ${volumes[t]||0}</span>`
+    ).join('');
+    lastPos=pos;
+    return pos;
+  }
+
+  function pulseTopic(topic){
+    const p=lastPos[topic]; if(!p) return;
+    const wrap=$('skyWrap');
+    const el=document.createElement('div');
+    el.className='burst';
+    el.style.left=p.x+'px'; el.style.top=p.y+'px';
+    el.style.background=colorFor(topic);
+    wrap.appendChild(el);
+    setTimeout(()=>el.remove(),900);
+  }
+
+  function apply(snap, isDelta){
+    $('day').textContent=snap.day;
+    $('evtCount').textContent=snap.stats.event_count;
+    $('updated').textContent=fmtTime(snap.generated_at);
+    const keys=new Set((snap.events||[]).map(eventKey));
+    const flash=new Set();
+    const newTopics=[];
+    if(isDelta){
+      (snap.events||[]).forEach(ev=>{
+        const k=eventKey(ev);
+        if(!known.has(k)){ flash.add(k); newTopics.push(ev.topic); }
+      });
+    }
+    known=keys;
+    renderKpis(snap);
+    renderRiver(snap, flash);
+    renderSilence(snap);
+    renderActors(snap);
+    layoutGraph(snap);
+    newTopics.forEach(pulseTopic);
+    lastFp=fp(snap);
+  }
+
+  let es = null;
+  let reconnectTimer = null;
+  let reconnectAttempt = 0;
+
+  function touch(){
+    lastMsg = Date.now();
+    setLive('live', 'live');
+  }
+
+  // Watchdog: ping every ~2s keeps lastMsg fresh. Only force reconnect if
+  // we truly stop hearing anything (ping OR snapshot) for 12s.
+  setInterval(()=>{
+    const age = (Date.now() - lastMsg) / 1000;
+    if (age > 12) {
+      setLive('dead', 'stream lost — retrying');
+      forceReconnect();
+    } else if (age > 6) {
+      setLive('stale', 'quiet');
+    } else {
+      setLive('live', 'live');
+    }
+  }, 1000);
+
+  function forceReconnect(){
+    if (reconnectTimer) return; // already scheduled
+    try { if (es) es.close(); } catch (_) {}
+    es = null;
+    const delay = Math.min(8000, 800 + reconnectAttempt * 700);
+    reconnectAttempt += 1;
+    reconnectTimer = setTimeout(()=>{ reconnectTimer = null; connect(); }, delay);
+  }
+
+  function connect(){
+    setLive('stale', 'connecting');
+    try { if (es) es.close(); } catch (_) {}
+    es = new EventSource('/api/stream');
+
+    es.addEventListener('snapshot', msg=>{
+      touch();
+      reconnectAttempt = 0;
+      try{
+        const snap = JSON.parse(msg.data);
+        const f = fp(snap);
+        apply(snap, !!(lastFp && f !== lastFp));
+      }catch(e){ console.error(e); }
+    });
+
+    // Heartbeat — keeps the pill green when the bus is idle
+    es.addEventListener('ping', ()=>{
+      touch();
+      reconnectAttempt = 0;
+    });
+
+    // EventSource auto-reconnects; don't fight it with close()+manual reconnect
+    // on every transient error. Only force if readyState is CLOSED.
+    es.onerror = ()=>{
+      setLive('dead', 'reconnecting…');
+      if (es && es.readyState === EventSource.CLOSED) {
+        forceReconnect();
+      }
+    };
+  }
+
+  window.addEventListener('resize', ()=>{
+    fetch('/api/snapshot').then(r=>r.json()).then(s=>apply(s,false)).catch(()=>{});
+  });
+
+  // Visibility resume — browsers throttle SSE in background tabs
+  document.addEventListener('visibilitychange', ()=>{
+    if (!document.hidden) {
+      fetch('/api/snapshot').then(r=>r.json()).then(s=>{ touch(); apply(s,false); }).catch(()=>{});
+      if (!es || es.readyState === EventSource.CLOSED) forceReconnect();
+    }
+  });
+
+  connect();
+})();
+</script>
+</body>
+</html>

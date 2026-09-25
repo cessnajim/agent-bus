@@ -1,0 +1,20 @@
+# Runtime (local bus data — may include emails, packet paths)
+events/
+state/
+.publish.lock
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Editor / OS
+.DS_Store
+*.swp
+*~
+
+# Local backups from High/Medium patches
+*.bak
+*.bak-*
