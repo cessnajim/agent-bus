@@ -18,6 +18,8 @@ Publish is part of **done** for catalog topics. After a successful side effect (
 
 Day ledger audits live reality vs `events/YYYY-MM-DD.jsonl` and backfills misses.
 
+`events/YYYY-MM-DD.jsonl` is the record. On a real publish, each subscriber also gets one line in `notify/<slug>/YYYY-MM-DD.jsonl`. That inbox is what the next session reads at start. The slug is the catalog name lowercased, with spaces turned into hyphens (`FTE Apply` → `fte-apply`). Wake is optional and best-effort: a `wake` command on a subscriber object, or a topic `wake` field for a string subscriber, receives the notify line on stdin (5s timeout). A non-zero exit or timeout leaves the event and the notify line in place. With no `wake` field, the file is the whole delivery.
+
 ## Live topics (catalog)
 Employment / WS: `fte.submit`, `fte.reject`, `fte.hold_cleared`, `critic.pass`, `catalant.email_confirmed`, `catalant.pitch_submitted`, `ws.short_of_target`, `ge.synced`
 

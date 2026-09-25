@@ -1,6 +1,7 @@
 # Runtime (local bus data — may include emails, packet paths)
 events/
 state/
+notify/
 .publish.lock
 
 # Python
