@@ -25,7 +25,7 @@
         "packet_path"
       ],
       "state_file": "ws",
-      "done_means": "GE tracker+canvas synced and WS proof logged for claim week"
+      "done_means": "GE tracker+canvas synced by publish hook; WS proof logged for claim week. Admin only for drift/reject/manual."
     },
     "fte.reject": {
       "description": "FTE application rejected or lost",
@@ -137,7 +137,8 @@
     "ge.synced": {
       "description": "Fedora GE tracker+canvas reconciled after submit/reject",
       "publishers": [
-        "Admin"
+        "Admin",
+        "agent-bus-hook"
       ],
       "subscribers": [
         "Admin"
@@ -146,7 +147,7 @@
         "submitted_on_count"
       ],
       "state_file": "ge",
-      "done_means": "reconcile_dashboard.py exit 0"
+      "done_means": "tracker+canvas reconciled (auto via agent-bus-hook on fte.submit, or Admin); reconcile_dashboard.py exit 0 for drift checks"
     },
     "adobe.batch_submitted": {
       "description": "Immich/DAM batch uploaded to Adobe Stock Contributor and is In review (non-exclusive RF; heroes off Stock)",

@@ -6,6 +6,7 @@ import argparse
 import fcntl
 import json
 import os
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -142,15 +143,67 @@ def main() -> int:
         finally:
             fcntl.flock(lockf, fcntl.LOCK_UN)
 
-    print(json.dumps({
+    result = {
         "status": "published",
         "path": str(path),
         "subscribers": meta.get("subscribers", []),
         "done_means": meta.get("done_means"),
         "state_path": str(state_path) if state_path else None,
         "event": event,
-    }, indent=2, ensure_ascii=False))
+    }
+
+    # Post-publish hooks (non-duplicate only). Failures are reported but do not
+    # roll back the bus event — publish still exits 0.
+    if args.topic == "fte.submit" and os.environ.get("AGENT_BUS_SKIP_HOOKS") != "1":
+        result["hooks"] = {"ge_sync": run_ge_sync_hook(event)}
+
+    print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0
+
+
+def run_ge_sync_hook(event: dict) -> dict:
+    """Invoke GE tracker+canvas sync for a fresh fte.submit. Never raises."""
+    hook = ROOT / "bin" / "ge_sync_from_fte_submit.py"
+    if not hook.exists():
+        return {"status": "error", "error": f"hook missing: {hook}"}
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(hook), "--event-json", "-"],
+            input=json.dumps(event),
+            capture_output=True,
+            text=True,
+            timeout=180,
+            cwd=str(ROOT),
+        )
+        stdout = (proc.stdout or "").strip()
+        stderr = (proc.stderr or "").strip()
+        parsed = None
+        if stdout:
+            try:
+                parsed = json.loads(stdout)
+            except json.JSONDecodeError:
+                # Hook may print noise then JSON — take last JSON object
+                for line in reversed(stdout.splitlines()):
+                    line = line.strip()
+                    if line.startswith("{"):
+                        try:
+                            parsed = json.loads(line)
+                            break
+                        except json.JSONDecodeError:
+                            continue
+        status = "ok"
+        if proc.returncode != 0:
+            status = "error"
+        elif isinstance(parsed, dict) and parsed.get("status") == "error":
+            status = "error"
+        return {
+            "status": status,
+            "returncode": proc.returncode,
+            "stdout": parsed if parsed is not None else stdout[:2000],
+            "stderr": stderr[:2000],
+        }
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
 
 
 if __name__ == "__main__":
