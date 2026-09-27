@@ -23,7 +23,7 @@ Employment / WS: `fte.submit`, `fte.reject`, `fte.hold_cleared`, `critic.pass`, 
 
 Out and About with Jim — Adobe Stock RF long-tail: `adobe.batch_submitted`, `adobe.review_logged`, `adobe.reject_reasons_captured` (state: `adobe`)
 
-Out and About with Jim — shop: `shop.order_received`, `shop.exclusive_draft_ready` (state: `shop`)
+Out and About with Jim — shop: `shop.order_received`, `shop.exclusive_draft_ready`, `shop.exclusive_sent` (state: `shop`; exclusives ledger: `state/shop_exclusives.json`)
 
 Admin owns catalog adds. Publish is part of done.
 
@@ -55,3 +55,21 @@ python3 ~/Projects/agent-bus/viz/server.py
 # open http://127.0.0.1:8788/  (LAN: http://192.168.88.13:8788/)
 ```
 SSE pushes a fresh snapshot whenever `events/*.jsonl`, `state/*.json`, or the catalog changes. Fully dynamic — topic set, actors, and KPIs come from the bus, not hard-coded tiles.
+
+## Shop Exclusives
+Outbound exclusives/print/extended outreach From `jim@northidaholabs.com` (Proton or Bridge SMTP). Standing auth after Writing Critic PASS (locked 2026-09-27) — Sales sends, then publishes; Admin gets FYI after the fact.
+
+- Dashboard: http://127.0.0.1:8788/shop.html  (API: `/api/shop`)
+- Ledger SoT: `state/shop_exclusives.json` (queue + sent). Thin snapshot remains `state/shop.json`.
+- Topic: `shop.exclusive_sent` — required refs: `prospect`, `to`, `subject`, `asset` (optional `draft_path`)
+
+After each confirmed send:
+```bash
+~/Projects/agent-bus/bin/publish.py \
+  --topic shop.exclusive_sent --actor Sales --key prospect-slug-YYYY-MM-DD \
+  --ref prospect="Prospect Name" --ref to=buyer@example.com \
+  --ref subject="Email subject" --ref asset="Asset name" \
+  --note "Bridge SMTP confirmed"
+
+# Then update state/shop_exclusives.json: move queue row → sent (status sent), set sent_at/via/actor.
+```

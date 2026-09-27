@@ -241,6 +241,26 @@
       ],
       "state_file": "shop",
       "done_means": "Admin surfaced draft to Jim for send/discard; nothing sent without Jim yes"
+    },
+    "shop.exclusive_sent": {
+      "description": "exclusive/print/extended outreach SENT From jim@",
+      "publishers": [
+        "Sales",
+        "Admin"
+      ],
+      "subscribers": [
+        "Admin",
+        "Sales",
+        "Marketing"
+      ],
+      "required_refs": [
+        "prospect",
+        "to",
+        "subject",
+        "asset"
+      ],
+      "state_file": "shop",
+      "done_means": "Bridge/Proton send confirmed; dashboard ledger updated; Admin FYI"
     }
   }
 }
