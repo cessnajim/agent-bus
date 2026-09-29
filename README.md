@@ -11,6 +11,8 @@ Admin only. All three must be true:
 One-off chat stays a DM. Specialists may not invent topics mid-turn.
 
 ## Mandate
+Publish is push. **Subscribers must also pull** (`busctl.py state` / `today` / `tail`) before acting on coordination state — skill [Agent bus check]. Chat DMs are best-effort; jsonl + state are SoT.
+
 Publish is part of **done** for catalog topics. After a successful side effect (Ashby confirm, reject mail, Critic PASS, Catalant confirm), the owning agent:
 1. `publish.py` with required refs
 2. DMs each subscriber on the topic
