@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Out and About — Exclusives</title>
+<style>
+:root{
+  --bg:#07090f;--ink:#e8eefc;--muted:#8b97b3;--dim:#5a6785;
+  --line:rgba(120,150,200,.14);--cyan:#3de0ff;--amber:#ffb020;
+  --magenta:#ff4d9a;--lime:#7dffb3;--violet:#9b7bff;--rose:#ff6b6b;
+  --card:linear-gradient(180deg,rgba(18,26,42,.9),rgba(10,14,22,.7));
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);
+  font:13px/1.45 "IBM Plex Sans","Segoe UI",system-ui,sans-serif}
+body{background-image:
+  radial-gradient(1200px 600px at 10% -10%,rgba(61,224,255,.08),transparent 55%),
+  radial-gradient(900px 500px at 95% 10%,rgba(155,123,255,.07),transparent 50%),
+  radial-gradient(800px 400px at 50% 110%,rgba(255,77,154,.05),transparent 50%)}
+.shell{max-width:1100px;margin:0 auto;padding:14px 16px 28px;display:flex;flex-direction:column;gap:12px}
+header{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.brand{display:flex;flex-direction:column;gap:2px}
+.brand h1{margin:0;font-size:16px;letter-spacing:.03em}
+.brand .sub{color:var(--muted);font-size:11px}
+.nav a{color:var(--cyan);text-decoration:none;font-size:12px;border:1px solid rgba(61,224,255,.28);
+  padding:4px 10px;border-radius:999px;background:rgba(61,224,255,.06)}
+.nav a:hover{background:rgba(61,224,255,.14)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;
+  border:1px solid var(--line);background:rgba(255,255,255,.03);font-size:11px;color:var(--muted)}
+.chip strong{color:var(--ink);font-weight:600}
+.chip .k{color:var(--dim);text-transform:uppercase;letter-spacing:.06em;font-size:10px}
+.counts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:720px){.counts{grid-template-columns:1fr}}
+.kpi{padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.kpi .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.kpi .n{font-size:28px;font-weight:650;margin-top:4px;font-variant-numeric:tabular-nums}
+.kpi.sent .n{color:var(--lime)}
+.kpi.queue .n{color:var(--cyan)}
+.kpi.critic .n{color:var(--amber)}
+.panel{border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}
+.panel h2{margin:0;padding:10px 14px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--muted);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.panel h2 span{font-weight:500;color:var(--dim);text-transform:none;letter-spacing:0}
+table{width:100%;border-collapse:collapse}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--dim);font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+td{font-size:12px}
+tr:last-child td{border-bottom:none}
+.mono{font-variant-numeric:tabular-nums;color:var(--muted)}
+.prospect{font-weight:600}
+.status{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;
+  border:1px solid var(--line);color:var(--muted)}
+.status.queued{color:var(--cyan);border-color:rgba(61,224,255,.35);background:rgba(61,224,255,.08)}
+.status.drafting{color:var(--violet);border-color:rgba(155,123,255,.35);background:rgba(155,123,255,.08)}
+.status.critic{color:var(--amber);border-color:rgba(255,176,32,.4);background:rgba(255,176,32,.08)}
+.status.draft_ready{color:var(--magenta);border-color:rgba(255,77,154,.35);background:rgba(255,77,154,.08)}
+.status.sent{color:var(--lime);border-color:rgba(125,255,179,.35);background:rgba(125,255,179,.08)}
+.empty{padding:18px 14px;color:var(--dim);font-size:12px}
+.foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:var(--dim);font-size:11px;padding:0 2px}
+.foot strong{color:var(--muted)}
+.err{color:var(--rose);padding:10px 14px;border:1px solid rgba(255,107,107,.35);border-radius:10px;background:rgba(255,107,107,.08)}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <div class="brand">
+      <h1>Out and About — Exclusives</h1>
+      <span class="sub">shop outbound · Bridge/Proton From jim@ · standing auth after Critic PASS</span>
+    </div>
+    <div class="nav"><a href="/">← Agent Bus</a></div>
+  </header>
+
+  <div class="chips" id="chips">
+    <div class="chip"><span class="k">from</span> <strong id="fromChip">—</strong></div>
+    <div class="chip"><span class="k">auth</span> <strong id="authChip">—</strong></div>
+    <div class="chip"><span class="k">ledger</span> <strong id="ledgerAt">—</strong></div>
+  </div>
+
+  <div class="counts">
+    <div class="kpi sent"><div class="label">Sent today</div><div class="n" id="sentToday">0</div></div>
+    <div class="kpi queue"><div class="label">In queue</div><div class="n" id="inQueue">0</div></div>
+    <div class="kpi critic"><div class="label">Critic-waiting</div><div class="n" id="criticWait">0</div></div>
+  </div>
+
+  <section class="panel">
+    <h2>Sent <span id="sentCount">0</span></h2>
+    <div id="sentTable"><div class="empty">No sent rows yet.</div></div>
+  </section>
+
+  <section class="panel">
+    <h2>Queue <span id="queueCount">0</span></h2>
+    <div id="queueTable"><div class="empty">Queue empty.</div></div>
+  </section>
+
+  <div class="foot">
+    <div>Refresh <strong>15s</strong> · <span id="genAt">—</span> · day <strong id="day">—</strong></div>
+    <div>shop.* events today: <strong id="evtCount">0</strong></div>
+  </div>
+  <div id="err" hidden class="err"></div>
+</div>
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+
+  function esc(s){
+    return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function dayOf(iso){
+    if (!iso) return '';
+    return String(iso).slice(0, 10);
+  }
+
+  function renderSent(rows){
+    const sorted = [...(rows||[])].sort((a,b) => String(b.sent_at||'').localeCompare(String(a.sent_at||'')));
+    $('sentCount').textContent = sorted.length + ' total';
+    if (!sorted.length){ $('sentTable').innerHTML = '<div class="empty">No sent rows yet.</div>'; return; }
+    const body = sorted.map(r => `<tr>
+      <td class="prospect">${esc(r.prospect)}</td>
+      <td>${esc(r.to)}</td>
+      <td>${esc(r.subject)}</td>
+      <td>${esc(r.asset)}</td>
+      <td class="mono">${esc(r.sent_at)}</td>
+      <td>${esc(r.via)}</td>
+      <td>${esc(r.actor)}</td>
+    </tr>`).join('');
+    $('sentTable').innerHTML = `<table>
+      <thead><tr><th>Prospect</th><th>To</th><th>Subject</th><th>Asset</th><th>Sent at</th><th>Via</th><th>Actor</th></tr></thead>
+      <tbody>${body}</tbody></table>`;
+  }
+
+  function renderQueue(rows){
+    const list = rows || [];
+    $('queueCount').textContent = list.length + ' total';
+    if (!list.length){ $('queueTable').innerHTML = '<div class="empty">Queue empty.</div>'; return; }
+    const body = list.map(r => `<tr>
+      <td class="prospect">${esc(r.prospect)}</td>
+      <td><span class="status ${esc(r.status)}">${esc(r.status)}</span></td>
+      <td>${esc(r.to)}</td>
+      <td>${esc(r.subject)}</td>
+      <td>${esc(r.asset)}</td>
+      <td>${esc(r.notes)}</td>
+    </tr>`).join('');
+    $('queueTable').innerHTML = `<table>
+      <thead><tr><th>Prospect</th><th>Status</th><th>To</th><th>Subject</th><th>Asset</th><th>Notes</th></tr></thead>
+      <tbody>${body}</tbody></table>`;
+  }
+
+  function apply(data){
+    const ledger = data.ledger || {};
+    const day = data.day || '';
+    $('fromChip').textContent = ledger.from || '—';
+    $('authChip').textContent = ledger.auth || '—';
+    $('ledgerAt').textContent = ledger.updated_at || '—';
+    $('day').textContent = day || '—';
+    $('genAt').textContent = data.generated_at || '—';
+    $('evtCount').textContent = (data.events || []).length;
+
+    const sent = ledger.sent || [];
+    const queue = ledger.queue || [];
+    const sentToday = sent.filter(r => dayOf(r.sent_at) === day).length;
+    const inQueue = queue.filter(r => r.status !== 'sent').length;
+    const criticWait = queue.filter(r => r.status === 'critic').length;
+
+    $('sentToday').textContent = sentToday;
+    $('inQueue').textContent = inQueue;
+    $('criticWait').textContent = criticWait;
+    renderSent(sent);
+    renderQueue(queue);
+    $('err').hidden = true;
+  }
+
+  function load(){
+    fetch('/api/shop', {cache:'no-store'})
+      .then(r => { if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(apply)
+      .catch(e => {
+        $('err').hidden = false;
+        $('err').textContent = 'Failed to load /api/shop: ' + e.message;
+      });
+  }
+
+  load();
+  setInterval(load, 15000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+[project]
+name = "agent-bus"
+version = "0.2.0"
+description = "Tiny durable topic bus for multi-agent coordination (jsonl + catalog + state)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Jim Coleman" }]
+keywords = ["agents", "pubsub", "coordination", "jsonl"]
+
+[project.urls]
+Homepage = "https://github.com/cessnajim/agent-bus"
+Repository = "https://github.com/cessnajim/agent-bus"
+Issues = "https://github.com/cessnajim/agent-bus/issues"
+
+[tool.setuptools]
+packages = []

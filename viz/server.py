@@ -86,6 +86,38 @@ def read_state() -> dict:
     return out
 
 
+
+def read_shop_exclusives() -> dict:
+    path = STATE / "shop_exclusives.json"
+    if not path.exists():
+        return {
+            "updated_at": "",
+            "from": "jim@northidaholabs.com",
+            "auth": "",
+            "queue": [],
+            "sent": [],
+        }
+    try:
+        return json.loads(path.read_text())
+    except json.JSONDecodeError:
+        return {"_error": "invalid json", "queue": [], "sent": []}
+
+
+def shop_payload() -> dict:
+    ledger = read_shop_exclusives()
+    day = today()
+    shop_events = [
+        ev for ev in read_events(day)
+        if (ev.get("topic") or "").startswith("shop.")
+    ]
+    return {
+        "ok": True,
+        "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+        "day": day,
+        "ledger": ledger,
+        "events": shop_events,
+    }
+
 def snapshot() -> dict:
     catalog = read_catalog()
     events = read_events()
@@ -151,6 +183,15 @@ class Handler(BaseHTTPRequestHandler):
             return self._file(STATIC / "index.html", "text/html; charset=utf-8")
         if path == "/api/snapshot":
             body = json.dumps(snapshot()).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self._no_store()
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        if path == "/api/shop":
+            body = json.dumps(shop_payload()).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(body)))
