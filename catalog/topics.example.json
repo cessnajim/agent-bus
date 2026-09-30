@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "owner": "Admin",
+  "rules": {
+    "new_topic": "Owner only. Add when >=2 subscribers, recurring, and done_means is nameable. No mid-turn invention.",
+    "mandate": "Publish is part of done for catalog topics. Audit jsonl vs reality and backfill misses.",
+    "dms": "After publish, DM subscribers listed on the topic. Bus is source of truth; DMs are best-effort push."
+  },
+  "topics": {
+    "task.done": {
+      "description": "A named work item finished with a receipt",
+      "publishers": ["Worker", "Admin"],
+      "subscribers": ["Admin", "Worker"],
+      "required_refs": ["item_id", "lane"],
+      "state_file": "board",
+      "done_means": "Subscribers pulled state/board and advanced their lane"
+    },
+    "task.blocked": {
+      "description": "Work item parked until a named unblock",
+      "publishers": ["Worker", "Admin"],
+      "subscribers": ["Admin", "Worker"],
+      "required_refs": ["item_id", "reason", "status", "do_not_reprompt"],
+      "state_file": "parks",
+      "done_means": "Open parks readable via busctl state parks; workers skip reopen while status=open"
+    }
+  }
+}

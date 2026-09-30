@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Portable entry: agent-bus topics | state | today | tail | publish ...
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+export AGENT_BUS_ROOT="${AGENT_BUS_ROOT:-$ROOT}"
+cmd="${1:-}"
+shift || true
+case "$cmd" in
+  topics|state|today|tail)
+    exec "$AGENT_BUS_ROOT/bin/busctl.py" "$cmd" "$@"
+    ;;
+  publish)
+    exec "$AGENT_BUS_ROOT/bin/publish.py" "$@"
+    ;;
+  root)
+    echo "$AGENT_BUS_ROOT"
+    ;;
+  ""|-h|--help|help)
+    cat <<USAGE
+Usage: agent-bus <topics|state|today|tail|publish|root> [args...]
+AGENT_BUS_ROOT=${AGENT_BUS_ROOT}
+USAGE
+    ;;
+  *)
+    echo "unknown command: $cmd" >&2
+    exit 2
+    ;;
+esac

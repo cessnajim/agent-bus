@@ -139,6 +139,29 @@ def main() -> int:
                         cur[k] = refs[k]
                     if k in event["state_delta"]:
                         cur[k] = event["state_delta"][k]
+                # fte.park: merge open/cleared rows by source_id into parks map.
+                if args.topic == "fte.park" and refs.get("source_id") is not None:
+                    sid = str(refs["source_id"])
+                    parks_map = cur.setdefault("parks", {})
+                    if refs.get("status") == "cleared":
+                        parks_map.pop(sid, None)
+                    else:
+                        parks_map[sid] = {
+                            "company": refs.get("company"),
+                            "role": refs.get("role"),
+                            "source_id": refs.get("source_id"),
+                            "reason": refs.get("reason"),
+                            "status": refs.get("status"),
+                            "do_not_reprompt": refs.get("do_not_reprompt"),
+                            "until": refs.get("until"),
+                            "packet_path": refs.get("packet_path"),
+                            "updated_at": event["ts"],
+                            "key": args.key,
+                            "actor": args.actor,
+                        }
+                    cur["open_count"] = sum(
+                        1 for p in parks_map.values() if p.get("status") == "open"
+                    )
                 atomic_write_json(state_path, cur)
         finally:
             fcntl.flock(lockf, fcntl.LOCK_UN)

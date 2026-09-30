@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "owner": "Admin",
   "rules": {
     "new_topic": "Admin only. Add when >=2 subscribers, recurring, and done_means is nameable. No mid-turn invention.",
@@ -65,8 +65,29 @@
       "state_file": "ws",
       "done_means": "Owning agent resumed the concrete unfinished step"
     },
+    "fte.park": {
+      "description": "FTE packet parked (Lever verify-fail, captcha, Jim Create-Account fill, soft-skip). Republish to clear.",
+      "publishers": [
+        "FTE Apply",
+        "Admin"
+      ],
+      "subscribers": [
+        "FTE Apply",
+        "Admin"
+      ],
+      "required_refs": [
+        "company",
+        "role",
+        "source_id",
+        "reason",
+        "status",
+        "do_not_reprompt"
+      ],
+      "state_file": "parks",
+      "done_means": "Open parks readable via busctl state parks; FTE Apply skips reopen while status=open; Jim not re-pinged when do_not_reprompt=true"
+    },
     "critic.pass": {
-      "description": "Writing Critic PASS on a packet",
+      "description": "Writing Critic PASS on an FTE / marketplace employment packet",
       "publishers": [
         "Writing Critic",
         "Admin"
@@ -78,10 +99,30 @@
       "required_refs": [
         "company",
         "role",
-        "packet_path"
+        "packet_path",
+        "lane"
       ],
       "state_file": null,
       "done_means": "Submit under standing apply-auth or Jim yes executed"
+    },
+    "critic.pass.outbound": {
+      "description": "Writing Critic PASS on shop / YouTube / other outbound-under-Jim-name copy",
+      "publishers": [
+        "Writing Critic",
+        "Admin"
+      ],
+      "subscribers": [
+        "Admin",
+        "Sales",
+        "Marketing"
+      ],
+      "required_refs": [
+        "lane",
+        "packet_path",
+        "asset"
+      ],
+      "state_file": null,
+      "done_means": "Owning lane executes standing send/publish auth or surfaces Jim-only blocker; FTE Apply does not wake"
     },
     "catalant.email_confirmed": {
       "description": "Catalant preferred-email confirm clicked",
@@ -225,7 +266,7 @@
       "done_means": "Ops acknowledged; Sales pinged if print/extended/exclusive"
     },
     "shop.exclusive_draft_ready": {
-      "description": "Sales exclusive/print/extended outreach draft ready for Jim yes (never auto-send)",
+      "description": "Sales exclusive/print/extended outreach draft ready (Critic lane); standing send-auth after Critic PASS",
       "publishers": [
         "Sales",
         "Admin"
@@ -240,7 +281,7 @@
         "draft_path"
       ],
       "state_file": "shop",
-      "done_means": "Admin surfaced draft to Jim for send/discard; nothing sent without Jim yes"
+      "done_means": "After Critic PASS, Sales/Admin may send From jim@northidaholabs.com under standing auth; publish shop.exclusive_sent; Admin FYI after the fact. Jim only for strategy/pricing/exceptions."
     },
     "shop.exclusive_sent": {
       "description": "exclusive/print/extended outreach SENT From jim@",
@@ -262,5 +303,7 @@
       "state_file": "shop",
       "done_means": "Bridge/Proton send confirmed; dashboard ledger updated; Admin FYI"
     }
-  }
+  },
+  "updated_at": "2026-09-30T19:41:52-04:00",
+  "updated_note": "2026-09-30: fte.park, critic.pass.outbound, shop.exclusive_draft_ready standing-auth; Jim via Primary"
 }

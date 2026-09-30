@@ -1,77 +1,71 @@
-# agent-bus (Fedora)
+# agent-bus
 
-Tiny durable topic bus for the agent roster. Not Kafka — jsonl + catalog + state snapshots.
+Tiny durable **topic bus** for a multi-agent roster. Not Kafka — append-only jsonl, a versioned catalog, hot state snapshots, and an optional SSE dashboard.
 
-## When to add a topic
-Admin only. All three must be true:
-1. Two or more subscribers
-2. It will recur
-3. `done_means` is nameable without a meeting
+**Public repo:** https://github.com/cessnajim/agent-bus
 
-One-off chat stays a DM. Specialists may not invent topics mid-turn.
+## Why
+Agents do not share one chat brain. After a real side effect (submit, reject, Critic PASS, order received), the owning agent **publishes** a catalog topic. Everyone else **pulls** before acting. Chat DMs are best-effort; the bus is source of truth.
+
+## Quick start
+See [INSTALL.md](INSTALL.md).
+
+```bash
+git clone https://github.com/cessnajim/agent-bus.git
+cd agent-bus && export AGENT_BUS_ROOT="$PWD"
+cp catalog/topics.example.json catalog/topics.json   # or keep the live catalog
+mkdir -p events state
+./bin/agent-bus topics
+```
+
+## Portability
+Set `AGENT_BUS_ROOT` on the machine that hosts the board. Agent skills must call `$AGENT_BUS_ROOT/bin/...` via Shell on that host’s `machineId` — never hard-code a username or hostname. Clone or rsync the repo (plus `events/` / `state/` if you need history) to move the board.
 
 ## Mandate
-Publish is push. **Subscribers must also pull** (`busctl.py state` / `today` / `tail`) before acting on coordination state — skill [Agent bus check]. Chat DMs are best-effort; jsonl + state are SoT.
-
-Publish is part of **done** for catalog topics. After a successful side effect (Ashby confirm, reject mail, Critic PASS, Catalant confirm), the owning agent:
-1. `publish.py` with required refs
-2. DMs each subscriber on the topic
-3. Yields only after that
-
-Day ledger audits live reality vs `events/YYYY-MM-DD.jsonl` and backfills misses.
-
-## Live topics (catalog)
-Employment / WS: `fte.submit`, `fte.reject`, `fte.hold_cleared`, `critic.pass`, `catalant.email_confirmed`, `catalant.pitch_submitted`, `ws.short_of_target`, `ge.synced`
-
-Out and About with Jim — Adobe Stock RF long-tail: `adobe.batch_submitted`, `adobe.review_logged`, `adobe.reject_reasons_captured` (state: `adobe`)
-
-Out and About with Jim — shop: `shop.order_received`, `shop.exclusive_draft_ready`, `shop.exclusive_sent` (state: `shop`; exclusives ledger: `state/shop_exclusives.json`)
-
-Admin owns catalog adds. Publish is part of done.
+1. Only topics in `catalog/topics.json` (owner adds topics; no mid-turn invention).
+2. Publish is part of **done** for catalog side effects.
+3. Subscribers **pull** (`busctl` / `agent-bus state|today|tail`) before treating chat as truth.
+4. After publish, DM each subscriber listed on the topic (best-effort).
 
 ## Commands
 ```bash
-~/Projects/agent-bus/bin/publish.py \
-  --topic fte.submit --actor "FTE Apply" --key oyster-a9b4-2026-09-24 \
-  --ref company=Oyster --ref role="Senior Director, Data Platform and AI" \
-  --ref source_id=a9b4d7d3 --ref packet_path=/path/to/packet \
-  --delta submitted=2 --delta target=6 --note "Ashby confirm"
-
-~/Projects/agent-bus/bin/busctl.py topics
-~/Projects/agent-bus/bin/busctl.py state ws
-~/Projects/agent-bus/bin/busctl.py today --topic fte.submit
+export AGENT_BUS_ROOT="${AGENT_BUS_ROOT:-$PWD}"
+"$AGENT_BUS_ROOT/bin/agent-bus" topics
+"$AGENT_BUS_ROOT/bin/agent-bus" state ws          # also: parks, catalant, ge, adobe, shop
+"$AGENT_BUS_ROOT/bin/agent-bus" today --topic fte.submit
+"$AGENT_BUS_ROOT/bin/publish.py" --topic fte.submit --actor "FTE Apply" --key '...' \
+  --ref company=Acme --ref role='...' --ref source_id='...' --ref packet_path='...' \
+  --delta submitted=1 --delta target=6 --delta date=YYYY-MM-DD --note 'confirm'
 ```
 
-MCP stays for I/O. This bus is coordination after I/O succeeds.
+## Live topics (this deployment)
+Employment / WS: `fte.submit`, `fte.reject`, `fte.hold_cleared`, `fte.park`, `critic.pass` (requires `lane`), `critic.pass.outbound`, `catalant.email_confirmed`, `catalant.pitch_submitted`, `ws.short_of_target`, `ge.synced`
 
-## Publish rules
+Adobe Stock: `adobe.batch_submitted`, `adobe.review_logged`, `adobe.reject_reasons_captured`
 
-- Notes over 400 characters are rejected.
-- Snapshot `refs` on a state file are the last event for that file only (not a merge).
-- The day jsonl under `events/` is the audit log; it is append-only.
-- Hand fields on a state file are not updated by publish; they stay until edited by hand.
+Shop: `shop.order_received`, `shop.exclusive_draft_ready`, `shop.exclusive_sent`
 
-## Live switchboard
-```bash
-python3 ~/Projects/agent-bus/viz/server.py
-# open http://127.0.0.1:8788/  (LAN: http://192.168.88.13:8788/)
-```
-SSE pushes a fresh snapshot whenever `events/*.jsonl`, `state/*.json`, or the catalog changes. Fully dynamic — topic set, actors, and KPIs come from the bus, not hard-coded tiles.
+Starter/generic topics live in `catalog/topics.example.json`.
 
-## Shop Exclusives
-Outbound exclusives/print/extended outreach From `jim@northidaholabs.com` (Proton or Bridge SMTP). Standing auth after Writing Critic PASS (locked 2026-09-27) — Sales sends, then publishes; Admin gets FYI after the fact.
+## Layout
+| Path | Role |
+|---|---|
+| `bin/publish.py` | Append event + update state snapshot |
+| `bin/busctl.py` | Read topics / state / today / tail |
+| `bin/agent-bus` | Thin portable CLI wrapper |
+| `catalog/topics.json` | Live catalog (deployment) |
+| `catalog/topics.example.json` | Generic starter |
+| `events/` | Daily jsonl (gitignored runtime) |
+| `state/` | Hot snapshots (gitignored runtime) |
+| `schema/` | Event JSON Schema |
+| `viz/` | Optional live dashboard |
+| `docs/skills/` | Copy-paste skill templates |
 
-- Dashboard: http://127.0.0.1:8788/shop.html  (API: `/api/shop`)
-- Ledger SoT: `state/shop_exclusives.json` (queue + sent). Thin snapshot remains `state/shop.json`.
-- Topic: `shop.exclusive_sent` — required refs: `prospect`, `to`, `subject`, `asset` (optional `draft_path`)
+## When to add a topic
+Owner only. All three must be true: ≥2 subscribers, recurring, and `done_means` is nameable. One-off chat stays a DM.
 
-After each confirmed send:
-```bash
-~/Projects/agent-bus/bin/publish.py \
-  --topic shop.exclusive_sent --actor Sales --key prospect-slug-YYYY-MM-DD \
-  --ref prospect="Prospect Name" --ref to=buyer@example.com \
-  --ref subject="Email subject" --ref asset="Asset name" \
-  --note "Bridge SMTP confirmed"
+## License
+MIT — see [LICENSE](LICENSE).
 
-# Then update state/shop_exclusives.json: move queue row → sent (status sent), set sent_at/via/actor.
-```
+## Distributing
+See [docs/DISTRIBUTING.md](docs/DISTRIBUTING.md).

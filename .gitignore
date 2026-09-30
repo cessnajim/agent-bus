@@ -18,3 +18,7 @@ venv/
 # Local backups from High/Medium patches
 *.bak
 *.bak-*
+
+# Local exports / scratch
+ge-all-*.tsv
+.env
