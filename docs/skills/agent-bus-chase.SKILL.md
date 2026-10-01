@@ -60,3 +60,6 @@ Actor is the primary's name (`Admin` or `Grok Bot`).
 Pull `stall` again later. The stall is gone, or `nudge_due` is false because a fresh progress event reset the clock. Publish stdout may include `chase_cleared` when the proof event closes an owed row.
 
 If the owner answered in chat and the owed topic is still missing, the stall stays open. Nudge again only after debounce.
+
+`critic.pass` chase only fires when `refs.lane=fte` (`chase.when_refs`). Master CV and outbound must not use employment chase.
+

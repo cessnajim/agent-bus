@@ -469,9 +469,12 @@ def _expect_stalls(topic: str, chase: dict, events: list[dict], follow: dict, no
     for ev in events:
         if ev.get("topic") != topic:
             continue
+        refs = ev.get("refs") or {}
+        when_refs = chase.get("when_refs") or {}
+        if when_refs and not refs_satisfy(refs, when_refs):
+            continue
         if _trigger_cleared(ev, events, chase):
             continue
-        refs = ev.get("refs") or {}
         ident = ":".join([topic] + [norm(refs.get(key)) for key in match_keys]) if match_keys else f"{topic}:{ev.get('idempotency_key') or ev.get('ts')}"
         prev = open_by_id.get(ident)
         if prev is None or str(ev.get("ts") or "") >= str(prev.get("ts") or ""):

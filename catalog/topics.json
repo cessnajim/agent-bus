@@ -113,9 +113,18 @@
       "done_means": "Submit under standing apply-auth or Jim yes executed, or fte.park if blocked. Chase proof is a later fte.submit or fte.park for the same company and role, not a chat ack.",
       "chase": {
         "owner": "FTE Apply",
-        "expect": ["fte.submit", "fte.park"],
-        "match": ["company", "role"],
-        "debounce_minutes": 30
+        "expect": [
+          "fte.submit",
+          "fte.park"
+        ],
+        "match": [
+          "company",
+          "role"
+        ],
+        "debounce_minutes": 30,
+        "when_refs": {
+          "lane": "fte"
+        }
       }
     },
     "critic.pass.outbound": {
@@ -189,9 +198,13 @@
       "done_means": "FTE Apply is harvesting, or an honest empty inventory is recorded (refs.inventory=empty on this topic). submitted is the absolute day count. Re-publish at most once per follow_through.debounce_minutes while the counts are unchanged. Chase proof is a later fte.submit or inventory=empty, not a chat ack.",
       "chase": {
         "owner": "FTE Apply",
-        "expect": ["fte.submit"],
+        "expect": [
+          "fte.submit"
+        ],
         "while": "submitted_below_target",
-        "clear_refs": {"inventory": "empty"},
+        "clear_refs": {
+          "inventory": "empty"
+        },
         "debounce_minutes": 30
       }
     },
@@ -325,13 +338,24 @@
     },
     "chase.owed": {
       "description": "Primary logged a stalled next step (who owes which catalog topic, since when). The nudge is not proof.",
-      "publishers": ["Admin", "Grok Bot"],
-      "subscribers": ["Admin", "FTE Apply"],
-      "required_refs": ["stall_id", "owed_topic", "owner", "status"],
+      "publishers": [
+        "Admin",
+        "Grok Bot"
+      ],
+      "subscribers": [
+        "Admin",
+        "FTE Apply"
+      ],
+      "required_refs": [
+        "stall_id",
+        "owed_topic",
+        "owner",
+        "status"
+      ],
       "state_file": "owed",
       "done_means": "The owed topic is on the bus for this stall_id, or status=cleared. busctl stall no longer marks it nudge_due. A chat ack is not proof."
     }
   },
-  "updated_at": "2026-10-01T16:14:49+00:00",
-  "updated_note": "2026-10-01: chase.owed + follow_through; critic.pass and ws.short_of_target chase; fte.submit submitted is absolute"
+  "updated_at": "2026-10-01",
+  "updated_note": "2026-10-01: critic.pass chase when_refs lane=fte only (no master/outbound noise)"
 }

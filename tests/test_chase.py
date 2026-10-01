@@ -50,6 +50,7 @@ def catalog() -> dict:
                     "owner": "FTE Apply",
                     "expect": ["fte.submit", "fte.park"],
                     "match": ["company", "role"],
+                    "when_refs": {"lane": "fte"},
                     "debounce_minutes": 30,
                 }
             },
@@ -109,8 +110,8 @@ class StallTests(unittest.TestCase):
 
     def test_submit_clears_matching_pass_only(self):
         events = [
-            event("critic.pass", ts(15), {"company": "Acme", "role": "Engineer"}, key="p1"),
-            event("critic.pass", ts(15, 5), {"company": "Other", "role": "Engineer"}, key="p2"),
+            event("critic.pass", ts(15), {"lane": "fte", "company": "Acme", "role": "Engineer"}, key="p1"),
+            event("critic.pass", ts(15, 5), {"lane": "fte", "company": "Other", "role": "Engineer"}, key="p2"),
             event("fte.submit", ts(16), {"company": "acme", "role": "engineer", "source_id": "1"}, key="s1"),
         ]
         report = stalls(events)
@@ -121,14 +122,14 @@ class StallTests(unittest.TestCase):
     def test_same_second_submit_still_clears_pass(self):
         when = ts(16)
         report = stalls([
-            event("critic.pass", when, {"company": "Acme", "role": "Engineer"}, key="p"),
+            event("critic.pass", when, {"lane": "fte", "company": "Acme", "role": "Engineer"}, key="p"),
             event("fte.submit", when, {"company": "Acme", "role": "Engineer", "source_id": "1"}, key="s"),
         ])
         self.assertEqual(report["stalls"], [])
 
     def test_park_clears_pass(self):
         report = stalls([
-            event("critic.pass", ts(15), {"company": "Acme", "role": "Engineer"}, key="p"),
+            event("critic.pass", ts(15), {"lane": "fte", "company": "Acme", "role": "Engineer"}, key="p"),
             event("fte.park", ts(16), {
                 "company": "Acme", "role": "Engineer", "status": "open", "source_id": "9",
             }, key="park"),
@@ -137,7 +138,7 @@ class StallTests(unittest.TestCase):
 
     def test_fresh_pass_is_not_nudge_due(self):
         report = stalls([
-            event("critic.pass", ts(17, 50), {"company": "Acme", "role": "Engineer"}, key="p"),
+            event("critic.pass", ts(17, 50), {"lane": "fte", "company": "Acme", "role": "Engineer"}, key="p"),
         ])
         self.assertEqual(len(report["stalls"]), 1)
         self.assertFalse(report["stalls"][0]["overdue"])
@@ -154,7 +155,7 @@ class StallTests(unittest.TestCase):
             }
         }
         report = stalls([
-            event("critic.pass", ts(16), {"company": "Acme", "role": "Engineer"}, key="p"),
+            event("critic.pass", ts(16), {"lane": "fte", "company": "Acme", "role": "Engineer"}, key="p"),
         ], {"owed": owed})
         row = report["stalls"][0]
         self.assertTrue(row["overdue"])
@@ -361,6 +362,20 @@ class PublishIntegrationTests(unittest.TestCase):
         self.assertEqual(report["open_parks"]["count"], 1)
         self.assertEqual(report["open_parks"]["items"][0]["reason"], "captcha")
         self.assertTrue(report["open_parks"]["items"][0]["do_not_reprompt"])
+
+
+
+class WhenRefsTests(unittest.TestCase):
+    def test_when_refs_skips_non_fte_lane(self):
+        events = [
+            event("critic.pass", ts(10), {"company": "master", "role": "CV", "lane": "master"}, key="m"),
+            event("critic.pass", ts(11), {"company": "ShopCo", "role": "YT", "lane": "youtube"}, key="y"),
+            event("critic.pass", ts(12), {"company": "Acme", "role": "Dir Eng", "lane": "fte"}, key="f"),
+        ]
+        report = stalls(events, now=datetime(2026, 10, 1, 13, 0, tzinfo=EASTERN))
+        expect = [s for s in report["stalls"] if s.get("kind") == "expect"]
+        self.assertEqual(len(expect), 1)
+        self.assertEqual(expect[0]["match"].get("company"), "Acme")
 
 
 if __name__ == "__main__":
