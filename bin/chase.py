@@ -84,6 +84,35 @@ def refs_match_keys(left: dict, right: dict, keys: list) -> bool:
     return True
 
 
+def norm_path(value) -> str:
+    return norm(str(value).rstrip("/"))
+
+
+def chase_refs_match(left: dict, right: dict, keys: list) -> bool:
+    """Match a chase trigger to a later proof event.
+
+    Prefer durable ids over role strings. Critic may PASS
+    "Director/Sr Director, AI Engineering" while submit records
+    "Director of AI Engineering" for the same source_id / packet.
+    Skill: agent-bus-chase — clear on matching source_id (or packet_path).
+    """
+    left = left or {}
+    right = right or {}
+    if left.get("company") not in (None, "") and right.get("company") not in (None, ""):
+        if not values_match(left.get("company"), right.get("company")):
+            return False
+
+    ls, rs = left.get("source_id"), right.get("source_id")
+    if ls not in (None, "") and rs not in (None, "") and values_match(ls, rs):
+        return True
+
+    lp, rp = left.get("packet_path"), right.get("packet_path")
+    if lp not in (None, "") and rp not in (None, "") and norm_path(lp) == norm_path(rp):
+        return True
+
+    return refs_match_keys(left, right, keys)
+
+
 def event_is_after(event: dict, trigger: dict) -> bool:
     """True when event is later than trigger.
 
@@ -162,10 +191,7 @@ def proof_clears_owed(row: dict, event: dict) -> bool:
         return False
     match = row.get("match") or {}
     refs = event.get("refs") or {}
-    for key, value in match.items():
-        if not values_match(refs.get(key), value):
-            return False
-    return True
+    return chase_refs_match(match, refs, list(match.keys()))
 
 
 def owed_ids_cleared_by(owed_map: dict, event: dict) -> list[str]:
@@ -448,12 +474,12 @@ def _trigger_cleared(trigger: dict, events: list[dict], chase: dict) -> bool:
     for ev in events:
         if not event_is_after(ev, trigger):
             continue
-        if ev.get("topic") in expect and refs_match_keys(trigger_refs, ev.get("refs") or {}, match_keys):
+        if ev.get("topic") in expect and chase_refs_match(trigger_refs, ev.get("refs") or {}, match_keys):
             return True
         if (
             clear_refs
             and ev.get("topic") == trigger.get("topic")
-            and refs_match_keys(trigger_refs, ev.get("refs") or {}, match_keys)
+            and chase_refs_match(trigger_refs, ev.get("refs") or {}, match_keys)
             and refs_satisfy(ev.get("refs") or {}, clear_refs)
         ):
             return True

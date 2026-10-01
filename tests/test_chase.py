@@ -218,6 +218,42 @@ class StallTests(unittest.TestCase):
         self.assertEqual(report["stalls"][0]["stall_id"], "custom:1")
         self.assertTrue(report["stalls"][0]["nudge_due"])
 
+    def test_role_string_mismatch_clears_when_source_id_matches(self):
+        """Vita-class drift: Critic PASS title vs ATS submit title, same source_id."""
+        report = stalls([
+            event("critic.pass", ts(12, 31), {
+                "lane": "fte",
+                "company": "Vita Global Sciences",
+                "role": "Director/Sr Director, AI Engineering",
+                "source_id": 6100,
+                "packet_path": "/workspace/ws-apply-2026-10-01/packets/vita-dir-ai-eng/",
+            }, key="vita-pass"),
+            event("fte.submit", ts(13, 8), {
+                "company": "Vita Global Sciences",
+                "role": "Director of AI Engineering",
+                "source_id": 6100,
+                "packet_path": "/workspace/ws-apply-2026-10-01/packets/vita-dir-ai-eng",
+            }, key="vita-sub"),
+        ])
+        self.assertEqual(report["stalls"], [])
+
+    def test_packet_path_clears_when_source_id_missing(self):
+        report = stalls([
+            event("critic.pass", ts(12, 31), {
+                "lane": "fte",
+                "company": "Acme",
+                "role": "Director / Sr Director, Platform",
+                "packet_path": "/workspace/packets/acme-dir/",
+            }, key="pass"),
+            event("fte.submit", ts(13, 8), {
+                "company": "Acme",
+                "role": "Director of Platform",
+                "packet_path": "/workspace/packets/acme-dir",
+                "source_id": "x",
+            }, key="sub"),
+        ])
+        self.assertEqual(report["stalls"], [])
+
     def test_proof_clears_owed_row(self):
         row = {
             "status": "open",

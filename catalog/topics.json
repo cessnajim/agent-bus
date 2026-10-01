@@ -110,7 +110,7 @@
         "lane"
       ],
       "state_file": null,
-      "done_means": "Submit under standing apply-auth or Jim yes executed, or fte.park if blocked. Chase proof is a later fte.submit or fte.park for the same company and role, not a chat ack.",
+      "done_means": "Submit under standing apply-auth or Jim yes executed, or fte.park if blocked. Chase proof is a later fte.submit or fte.park for the same company+source_id (or same packet_path); role-string mismatch alone must not stall.",
       "chase": {
         "owner": "FTE Apply",
         "expect": [
@@ -124,7 +124,8 @@
         "debounce_minutes": 30,
         "when_refs": {
           "lane": "fte"
-        }
+        },
+        "match_note": "Configured match keys are company+role fallback; chase_refs_match also clears when source_id or packet_path matches (same company)."
       }
     },
     "critic.pass.outbound": {
