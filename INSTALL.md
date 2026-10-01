@@ -32,15 +32,16 @@ test -f state/parks.json || printf '%s\n' '{"parks":{}}' > state/parks.json
   --topic task.done --actor Worker --key demo-1 \
   --ref item_id=demo-1 --ref lane=demo --note 'smoke'
 "$AGENT_BUS_ROOT/bin/busctl.py" today
+"$AGENT_BUS_ROOT/bin/busctl.py" stall
 ```
 
-If you kept Jim's employment catalog instead of the example, use a real topic from `busctl.py topics` for the smoke publish.
+`stall` (alias `owed`) is the follow-through report: empty on a fresh board, then WS-short / unmatched Critic PASS / open parks once the live catalog is in use. If you kept Jim's employment catalog instead of the example, use a real topic from `busctl.py topics` for the smoke publish.
 
 ## 5. Point agents at the host
 On every agent that publishes or pulls:
 1. `ListMachines` / Shell `machineId` = the computer that has `AGENT_BUS_ROOT`
 2. Always run `$AGENT_BUS_ROOT/bin/busctl.py` and `$AGENT_BUS_ROOT/bin/publish.py`
-3. Copy the recipes in `docs/skills/` into your agent skill library (or adapt [Agent bus check] / [Agent bus publish])
+3. Copy the recipes in `docs/skills/` into your agent skill library: check, publish, and **chase**. Primary runs chase; specialists use the same stall report and do not invent a second loop.
 
 ## 6. Optional live viz
 ```bash

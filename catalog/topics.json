@@ -1,10 +1,17 @@
 {
-  "version": 2,
+  "version": 3,
   "owner": "Admin",
   "rules": {
     "new_topic": "Admin only. Add when >=2 subscribers, recurring, and done_means is nameable. No mid-turn invention.",
     "mandate": "Publish is part of done for catalog topics. Day ledger audits jsonl vs reality and backfills misses.",
-    "dms": "After publish, DM subscribers listed on the topic. Bus is source of truth; DMs are best-effort push."
+    "dms": "After publish, DM subscribers listed on the topic. Bus is source of truth; DMs are best-effort push.",
+    "chase": "Primary (catalog owner; Grok Bot acts as Admin here) owns follow-through. Pull busctl stall, nudge the stall owner, publish chase.owed, verify the next bus event. A chat ack is not proof."
+  },
+  "follow_through": {
+    "primary": "Admin",
+    "proof": "next bus event",
+    "debounce_minutes": 30,
+    "lookback_days": 2
   },
   "topics": {
     "fte.submit": {
@@ -25,7 +32,7 @@
         "packet_path"
       ],
       "state_file": "ws",
-      "done_means": "GE tracker+canvas synced by publish hook; WS proof logged for claim week. Admin only for drift/reject/manual."
+      "done_means": "GE tracker+canvas synced by publish hook; WS proof logged for claim week. --delta submitted=N is the absolute count for that date, not an increment. The ws snapshot stores max(claim, today's fte.submit event count) so a repeated submitted=1 cannot stick. Admin only for drift/reject/manual."
     },
     "fte.reject": {
       "description": "FTE application rejected or lost",
@@ -103,7 +110,13 @@
         "lane"
       ],
       "state_file": null,
-      "done_means": "Submit under standing apply-auth or Jim yes executed"
+      "done_means": "Submit under standing apply-auth or Jim yes executed, or fte.park if blocked. Chase proof is a later fte.submit or fte.park for the same company and role, not a chat ack.",
+      "chase": {
+        "owner": "FTE Apply",
+        "expect": ["fte.submit", "fte.park"],
+        "match": ["company", "role"],
+        "debounce_minutes": 30
+      }
     },
     "critic.pass.outbound": {
       "description": "Writing Critic PASS on shop / YouTube / other outbound-under-Jim-name copy",
@@ -173,7 +186,14 @@
         "target"
       ],
       "state_file": "ws",
-      "done_means": "FTE Apply harvesting or honest empty inventory recorded"
+      "done_means": "FTE Apply is harvesting, or an honest empty inventory is recorded (refs.inventory=empty on this topic). submitted is the absolute day count. Re-publish at most once per follow_through.debounce_minutes while the counts are unchanged. Chase proof is a later fte.submit or inventory=empty, not a chat ack.",
+      "chase": {
+        "owner": "FTE Apply",
+        "expect": ["fte.submit"],
+        "while": "submitted_below_target",
+        "clear_refs": {"inventory": "empty"},
+        "debounce_minutes": 30
+      }
     },
     "ge.synced": {
       "description": "Fedora GE tracker+canvas reconciled after submit/reject",
@@ -302,8 +322,16 @@
       ],
       "state_file": "shop",
       "done_means": "Bridge/Proton send confirmed; dashboard ledger updated; Admin FYI"
+    },
+    "chase.owed": {
+      "description": "Primary logged a stalled next step (who owes which catalog topic, since when). The nudge is not proof.",
+      "publishers": ["Admin", "Grok Bot"],
+      "subscribers": ["Admin", "FTE Apply"],
+      "required_refs": ["stall_id", "owed_topic", "owner", "status"],
+      "state_file": "owed",
+      "done_means": "The owed topic is on the bus for this stall_id, or status=cleared. busctl stall no longer marks it nudge_due. A chat ack is not proof."
     }
   },
-  "updated_at": "2026-09-30T19:41:52-04:00",
-  "updated_note": "2026-09-30: fte.park, critic.pass.outbound, shop.exclusive_draft_ready standing-auth; Jim via Primary"
+  "updated_at": "2026-10-01T16:14:49+00:00",
+  "updated_note": "2026-10-01: chase.owed + follow_through; critic.pass and ws.short_of_target chase; fte.submit submitted is absolute"
 }

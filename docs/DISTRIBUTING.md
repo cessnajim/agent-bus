@@ -18,8 +18,9 @@
 | Layer | Portable? | Notes |
 |---|---|---|
 | publish/busctl/schema/viz | yes | no host paths inside |
-| skills templates | yes | use `$AGENT_BUS_ROOT` |
-| topics.json | deployment | rename actors/topics per roster |
+| skills templates | yes | use `$AGENT_BUS_ROOT`; include agent-bus-chase |
+| follow-through | yes | `follow_through` + per-topic `chase` + `chase.owed`; `busctl stall` |
+| topics.json | deployment | rename actors/topics per roster; keep chase blocks with the topics they wake |
 | events/state | deployment data | sync only if moving the board |
 
 ## Versioning

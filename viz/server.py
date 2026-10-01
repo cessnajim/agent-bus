@@ -38,10 +38,13 @@ def read_catalog() -> dict:
             "state_file": meta.get("state_file"),
             "done_means": meta.get("done_means", ""),
         }
+        if meta.get("chase") is not None:
+            topics[name]["chase"] = meta.get("chase")
     return {
         "version": raw.get("version"),
         "owner": raw.get("owner"),
         "rules": raw.get("rules"),
+        "follow_through": raw.get("follow_through") or {},
         "topics": topics,
     }
 
