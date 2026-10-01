@@ -11,7 +11,11 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+# bin/ is not a package; chase.py sits beside this script.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import chase  # noqa: E402
+
+ROOT = chase.bus_root()
 CATALOG = ROOT / "catalog" / "topics.json"
 EVENTS = ROOT / "events"
 STATE = ROOT / "state"
@@ -98,23 +102,53 @@ def main() -> int:
     if args.note:
         event["note"] = args.note
 
+    now = datetime.now().astimezone()
     EVENTS.mkdir(parents=True, exist_ok=True)
-    day = datetime.now().astimezone().date().isoformat()
+    day = now.date().isoformat()
     path = EVENTS / f"{day}.jsonl"
     state_name = meta.get("state_file")
     state_path = (STATE / f"{state_name}.json") if state_name else None
+    submitted_floor = None
+    submitted_stored = None
+    debounce_warn = None
+    chase_cleared: list[str] = []
+    result_chase_error = None
 
     LOCK.parent.mkdir(parents=True, exist_ok=True)
     with LOCK.open("a") as lockf:
         fcntl.flock(lockf, fcntl.LOCK_EX)
         try:
-            for prev in load_day_events(path):
+            prior = load_day_events(path)
+            for prev in prior:
                 if prev.get("idempotency_key") == args.key and prev.get("topic") == args.topic:
                     print(json.dumps({"status": "duplicate", "path": str(path), "event": prev}, indent=2))
                     return 0
 
             # Fail closed on corrupt state BEFORE appending the event.
             cur = load_state(state_path) if state_path else None
+
+            # --delta/--ref submitted is the absolute count for the day, not +1.
+            # Floor the snapshot at today's fte.submit ledger so a second
+            # submitted=1 cannot leave state stuck at 1. Jsonl keeps the claim.
+            ledger = sum(1 for prev in prior if prev.get("topic") == "fte.submit")
+            if args.topic == "fte.submit":
+                ledger += 1
+            writes_submitted = "submitted" in refs or "submitted" in event["state_delta"]
+            if state_name == "ws" and (args.topic == "fte.submit" or writes_submitted):
+                claimed = event["state_delta"].get("submitted", refs.get("submitted"))
+                stored, adjusted = chase.submitted_floor(claimed, ledger)
+                submitted_stored = stored
+                if adjusted:
+                    submitted_floor = {"claimed": claimed, "ledger": ledger, "stored": stored}
+
+            if args.topic == "ws.short_of_target":
+                debounce = chase.debounce_minutes(
+                    meta.get("chase") or {},
+                    catalog.get("follow_through") or {},
+                )
+                debounce_warn = chase.short_republish_warning(
+                    prior, refs, event["state_delta"], debounce, now
+                )
 
             with path.open("a") as f:
                 f.write(json.dumps(event, ensure_ascii=False) + "\n")
@@ -139,30 +173,39 @@ def main() -> int:
                         cur[k] = refs[k]
                     if k in event["state_delta"]:
                         cur[k] = event["state_delta"][k]
-                # fte.park: merge open/cleared rows by source_id into parks map.
-                if args.topic == "fte.park" and refs.get("source_id") is not None:
-                    sid = str(refs["source_id"])
-                    parks_map = cur.setdefault("parks", {})
-                    if refs.get("status") == "cleared":
-                        parks_map.pop(sid, None)
-                    else:
-                        parks_map[sid] = {
-                            "company": refs.get("company"),
-                            "role": refs.get("role"),
-                            "source_id": refs.get("source_id"),
-                            "reason": refs.get("reason"),
-                            "status": refs.get("status"),
-                            "do_not_reprompt": refs.get("do_not_reprompt"),
-                            "until": refs.get("until"),
-                            "packet_path": refs.get("packet_path"),
-                            "updated_at": event["ts"],
-                            "key": args.key,
-                            "actor": args.actor,
-                        }
-                    cur["open_count"] = sum(
-                        1 for p in parks_map.values() if p.get("status") == "open"
-                    )
+                if submitted_stored is not None:
+                    cur["submitted"] = submitted_stored
+                    cur.setdefault("state", {})["submitted"] = submitted_stored
+                # Parks: open/cleared rows keyed by source_id or item_id.
+                if state_name == "parks":
+                    chase.apply_parks_row(cur, refs, event, args.key, args.actor)
+                if args.topic == "chase.owed" and refs.get("stall_id") is not None:
+                    chase.apply_owed_row(cur, refs, event, args.key, args.actor)
                 atomic_write_json(state_path, cur)
+
+            if args.topic != "chase.owed":
+                owed_path = STATE / "owed.json"
+                try:
+                    owed = load_state(owed_path) if owed_path.exists() else {}
+                except SystemExit as exc:
+                    result_chase_error = str(exc)
+                    owed = None
+                else:
+                    result_chase_error = None
+                if isinstance(owed, dict):
+                    chase_cleared = chase.owed_ids_cleared_by(owed.get("owed") or {}, event)
+                    if chase_cleared:
+                        owed_map = owed.setdefault("owed", {})
+                        for stall_id in chase_cleared:
+                            owed_map.pop(stall_id, None)
+                        owed["open_count"] = sum(
+                            1
+                            for row in owed_map.values()
+                            if isinstance(row, dict) and row.get("status") == "open"
+                        )
+                        owed["updated_at"] = event["ts"]
+                        owed["last_proof_topic"] = args.topic
+                        atomic_write_json(owed_path, owed)
         finally:
             fcntl.flock(lockf, fcntl.LOCK_UN)
 
@@ -174,6 +217,14 @@ def main() -> int:
         "state_path": str(state_path) if state_path else None,
         "event": event,
     }
+    if submitted_floor:
+        result["submitted_floor"] = submitted_floor
+    if debounce_warn:
+        result["chase_warn"] = debounce_warn
+    if chase_cleared:
+        result["chase_cleared"] = chase_cleared
+    if result_chase_error:
+        result["chase_clear_error"] = result_chase_error
 
     # Post-publish hooks (non-duplicate only). Failures are reported but do not
     # roll back the bus event — publish still exits 0.

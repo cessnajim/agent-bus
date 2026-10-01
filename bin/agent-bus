@@ -6,7 +6,7 @@ export AGENT_BUS_ROOT="${AGENT_BUS_ROOT:-$ROOT}"
 cmd="${1:-}"
 shift || true
 case "$cmd" in
-  topics|state|today|tail)
+  topics|state|today|tail|stall|owed)
     exec "$AGENT_BUS_ROOT/bin/busctl.py" "$cmd" "$@"
     ;;
   publish)
@@ -17,7 +17,7 @@ case "$cmd" in
     ;;
   ""|-h|--help|help)
     cat <<USAGE
-Usage: agent-bus <topics|state|today|tail|publish|root> [args...]
+Usage: agent-bus <topics|state|today|tail|stall|owed|publish|root> [args...]
 AGENT_BUS_ROOT=${AGENT_BUS_ROOT}
 USAGE
     ;;
