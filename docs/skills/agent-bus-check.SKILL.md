@@ -15,3 +15,7 @@ export AGENT_BUS_ROOT="${AGENT_BUS_ROOT:-$HOME/Projects/agent-bus}"
 ```
 
 Publish alone is not enough. Chat DMs are best-effort; jsonl + state are source of truth. `stall` (alias `owed`) is the follow-through report. Primary runs `docs/skills/agent-bus-chase.SKILL.md` when `nudge_due` is true. Proof is the next bus event, not a chat ack.
+
+## Submit-ready Critic PASS (day-ledger)
+
+When counting “submit-ready” `critic.pass` for the day ledger, require `lane=fte` and exclude master CV (`company=master` or `source_id` containing `master`). Helper: `chase.is_submit_ready_pass(refs)` in `bin/chase.py`. Jim-held PASSes should already have same-turn `fte.park` (see chase skill).

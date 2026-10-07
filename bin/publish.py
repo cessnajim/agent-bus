@@ -149,6 +149,16 @@ def main() -> int:
                 debounce_warn = chase.short_republish_warning(
                     prior, refs, event["state_delta"], debounce, now
                 )
+                if debounce_warn:
+                    print(json.dumps({
+                        "status": "debounced",
+                        "path": str(path),
+                        "chase_block": debounce_warn,
+                        "subscribers": meta.get("subscribers", []),
+                        "done_means": meta.get("done_means"),
+                        "event": event,
+                    }, indent=2, ensure_ascii=False))
+                    return 0
 
             with path.open("a") as f:
                 f.write(json.dumps(event, ensure_ascii=False) + "\n")

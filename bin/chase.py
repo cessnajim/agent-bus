@@ -499,6 +499,9 @@ def _expect_stalls(topic: str, chase: dict, events: list[dict], follow: dict, no
         when_refs = chase.get("when_refs") or {}
         if when_refs and not refs_satisfy(refs, when_refs):
             continue
+        # Master CV often lands with lane=fte; still not an application.
+        if topic == "critic.pass" and is_master_cv_pass(refs):
+            continue
         if _trigger_cleared(ev, events, chase):
             continue
         ident = ":".join([topic] + [norm(refs.get(key)) for key in match_keys]) if match_keys else f"{topic}:{ev.get('idempotency_key') or ev.get('ts')}"
@@ -630,8 +633,36 @@ def build_stall_report(root: Path | None = None, now: datetime | None = None) ->
     return detect_stalls(catalog, events, states, now)
 
 
+def is_master_cv_pass(refs: dict) -> bool:
+    """Master CV / template critic.pass — not an employment application owed submit."""
+    refs = refs or {}
+    if values_match(refs.get("company"), "master"):
+        return True
+    sid = refs.get("source_id")
+    if sid not in (None, "") and "master" in norm(str(sid)):
+        return True
+    return False
+
+
+def is_submit_ready_pass(refs: dict) -> bool:
+    """Day-ledger / FTE Apply: employment PASS that may owe fte.submit or fte.park.
+
+    Excludes non-fte lanes and master CV (company=master or source_id containing master).
+    """
+    refs = refs or {}
+    if not values_match(refs.get("lane"), "fte"):
+        return False
+    if is_master_cv_pass(refs):
+        return False
+    return True
+
+
 def short_republish_warning(prior_events: list[dict], refs: dict, delta: dict, debounce_minutes: int, now: datetime) -> dict | None:
-    """Warn when ws.short_of_target is repeated inside the debounce window with the same counts."""
+    """Block signal when ws.short_of_target repeats inside debounce with same counts.
+
+    publish.py hard-blocks when this returns a dict. One exception: first
+    inventory=empty after a non-empty short may publish (clears the stall).
+    """
     last = None
     for ev in prior_events:
         if ev.get("topic") == "ws.short_of_target":
@@ -659,9 +690,25 @@ def short_republish_warning(prior_events: list[dict], refs: dict, delta: dict, d
     )
     if not (same_submitted and same_target):
         return None
+    new_inv = _pick(delta, refs, "inventory")
+    if new_inv is None:
+        new_inv = refs.get("inventory")
+    last_inv = _pick(last_delta, last_refs, "inventory")
+    if last_inv is None:
+        last_inv = last_refs.get("inventory")
+    # Honest empty inventory is chase-clearing progress; allow once through debounce.
+    if values_match(new_inv, "empty") and not values_match(last_inv, "empty"):
+        return None
     return {
         "debounce": True,
+        "blocked": True,
         "debounce_minutes": debounce_minutes,
         "age_minutes": age,
-        "message": "ws.short_of_target already published inside the debounce window with the same submitted/target. Prefer busctl stall; do not treat another short event as follow-through.",
+        "last_key": last.get("idempotency_key"),
+        "last_ts": last.get("ts"),
+        "message": (
+            "ws.short_of_target already published inside the debounce window with the same "
+            "submitted/target. Hard-blocked. Prefer busctl stall. One publisher for short "
+            "(catalog: Admin/day-ledger); do not republish as follow-through."
+        ),
     }

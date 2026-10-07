@@ -110,7 +110,7 @@
         "lane"
       ],
       "state_file": null,
-      "done_means": "Submit under standing apply-auth or Jim yes executed, or fte.park if blocked. Chase proof is a later fte.submit or fte.park for the same company+source_id (or same packet_path); role-string mismatch alone must not stall.",
+      "done_means": "Submit under standing apply-auth or Jim yes executed, or fte.park if blocked. Jim-held PASSes: prefer fte.park in the same turn (status=open, do_not_reprompt) so chase does not stall waiting for Jim. Chase proof is a later fte.submit or fte.park for the same company+source_id (or same packet_path); role-string mismatch alone must not stall. Master CV (company=master or source_id containing master) is not an application — excluded from chase stalls and submit-ready counts.",
       "chase": {
         "owner": "FTE Apply",
         "expect": [
@@ -125,7 +125,8 @@
         "when_refs": {
           "lane": "fte"
         },
-        "match_note": "Configured match keys are company+role fallback; chase_refs_match also clears when source_id or packet_path matches (same company)."
+        "match_note": "Configured match keys are company+role fallback; chase_refs_match also clears when source_id or packet_path matches (same company).",
+        "exclude_note": "Skip company=master and source_id containing 'master' (master CV / templates), even when lane=fte."
       }
     },
     "critic.pass.outbound": {
@@ -196,7 +197,7 @@
         "target"
       ],
       "state_file": "ws",
-      "done_means": "FTE Apply is harvesting, or an honest empty inventory is recorded (refs.inventory=empty on this topic). submitted is the absolute day count. Re-publish at most once per follow_through.debounce_minutes while the counts are unchanged. Chase proof is a later fte.submit or inventory=empty, not a chat ack.",
+      "done_means": "FTE Apply is harvesting, or an honest empty inventory is recorded (refs.inventory=empty on this topic). submitted is the absolute day count. One publisher for short: Admin or day-ledger only (FTE Apply uses busctl stall; may publish inventory=empty once to clear). Duplicate short with unchanged submitted/target inside follow_through.debounce_minutes is hard-blocked (publish status=debounced) unless this is the first inventory=empty after a non-empty short. Chase proof is a later fte.submit or inventory=empty, not a chat ack.",
       "chase": {
         "owner": "FTE Apply",
         "expect": [
@@ -357,6 +358,6 @@
       "done_means": "The owed topic is on the bus for this stall_id, or status=cleared. busctl stall no longer marks it nudge_due. A chat ack is not proof."
     }
   },
-  "updated_at": "2026-10-01",
-  "updated_note": "2026-10-01: critic.pass chase when_refs lane=fte only (no master/outbound noise)"
+  "updated_at": "2026-10-06",
+  "updated_note": "2026-10-06: hard-block duplicate ws.short_of_target inside debounce; exclude master CV from critic.pass chase/submit-ready; park-same-turn for Jim-held PASS"
 }

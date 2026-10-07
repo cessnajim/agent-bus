@@ -37,7 +37,7 @@ The bus is the board (events + state). It does not wake agents. Chat DMs are bes
 3. **Nudge** the stall `owner` (DM, best-effort) and publish `chase.owed` so the nudge is on the board.
 4. **Verify** on the next pull. The stall clears when the expected topic is published. A chat ack is not proof.
 
-Debounce defaults to 30 minutes (`follow_through.debounce_minutes`). Do not re-publish `ws.short_of_target` inside that window when submitted and target are unchanged. Copy `docs/skills/agent-bus-chase.SKILL.md` with the check and publish skills.
+Debounce defaults to 30 minutes (`follow_through.debounce_minutes`). Duplicate `ws.short_of_target` with unchanged submitted/target inside that window is hard-blocked (`status=debounced`); Admin/day-ledger is the one short publisher. Master CV `critic.pass` (`company=master`) is excluded from chase stalls. Copy `docs/skills/agent-bus-chase.SKILL.md` with the check and publish skills.
 
 `fte.submit` `--delta submitted=N` is the **absolute** count for that date, not an increment. Two receipts both sent as `submitted=1` used to leave `state/ws.json` stuck at 1. The snapshot now stores `max(claim, today's fte.submit event count)`. Pass the real absolute total when some submits are off the bus; the floor only prevents an undercount against the ledger.
 

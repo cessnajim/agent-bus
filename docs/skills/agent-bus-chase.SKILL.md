@@ -32,7 +32,7 @@ export AGENT_BUS_ROOT="${AGENT_BUS_ROOT:-$HOME/Projects/agent-bus}"
 
 A row with `overdue: false` is still inside the debounce window after the last progress event. Watch it. Do not nudge yet.
 
-Do not re-publish `ws.short_of_target` while `chase_warn` would fire (same submitted and target inside the debounce window). Pass `--delta submitted=N` as the **absolute** count for the date, never as `+1`.
+Duplicate `ws.short_of_target` with the same submitted/target inside the debounce window is **hard-blocked** (`status=debounced`). Prefer `busctl stall`. **One publisher for short:** Admin / day-ledger only. FTE Apply pulls stall; may publish `inventory=empty` once to clear. Pass `--delta submitted=N` as the **absolute** count for the date, never as `+1`.
 
 ## Nudge
 
@@ -61,5 +61,9 @@ Pull `stall` again later. The stall is gone, or `nudge_due` is false because a f
 
 If the owner answered in chat and the owed topic is still missing, the stall stays open. Nudge again only after debounce.
 
-`critic.pass` chase only fires when `refs.lane=fte` (`chase.when_refs`). Master CV and outbound must not use employment chase.
+`critic.pass` chase only fires when `refs.lane=fte` (`chase.when_refs`) and the PASS is not a master CV (`company=master` or `source_id` containing `master`). Outbound uses `critic.pass.outbound`, not employment chase.
+
+## Jim-held PASS → park same turn
+
+If a Critic PASS cannot submit without Jim (Create Account, captcha Jim must solve, strategy hold), publish `fte.park` in the **same turn** as the PASS (`status=open`, `do_not_reprompt=true` when Jim should not be re-pinged). That clears the chase expect. Do not leave a Jim-held PASS as an open stall hoping Jim will notice.
 

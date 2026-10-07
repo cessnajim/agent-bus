@@ -414,5 +414,93 @@ class WhenRefsTests(unittest.TestCase):
         self.assertEqual(expect[0]["match"].get("company"), "Acme")
 
 
+class MasterCvAndSubmitReadyTests(unittest.TestCase):
+    def test_master_cv_lane_fte_is_not_a_stall(self):
+        """Real 2026-10-06 shape: company=master, lane=fte, source_id=*master*."""
+        report = stalls([
+            event("critic.pass", ts(12, 34), {
+                "lane": "fte",
+                "company": "master",
+                "role": "Eng Dir / AI-platform CV master",
+                "source_id": "cv-eng-dir-ai-platform-master",
+                "packet_path": "/workspace/apply/masters/CV-eng-dir-ai-platform.md",
+            }, key="master-pass"),
+            event("critic.pass", ts(12, 40), {
+                "lane": "fte", "company": "Acme", "role": "Engineer", "source_id": "9",
+            }, key="real-pass"),
+        ], now=datetime(2026, 10, 1, 14, 0, tzinfo=EASTERN))
+        expect = [s for s in report["stalls"] if s.get("kind") == "expect"]
+        self.assertEqual(len(expect), 1)
+        self.assertEqual(expect[0]["match"].get("company"), "Acme")
+
+    def test_submit_ready_helper(self):
+        self.assertTrue(chase.is_submit_ready_pass({"lane": "fte", "company": "Acme", "source_id": "1"}))
+        self.assertFalse(chase.is_submit_ready_pass({"lane": "fte", "company": "master", "source_id": "cv-x-master"}))
+        self.assertFalse(chase.is_submit_ready_pass({"lane": "master", "company": "Acme"}))
+        self.assertFalse(chase.is_submit_ready_pass({"lane": "fte", "company": "Acme", "source_id": "cv-eng-dir-ai-platform-master"}))
+        self.assertTrue(chase.is_master_cv_pass({"company": "master"}))
+
+
+class DebounceHardBlockTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+        shutil.copytree(ROOT / "catalog", self.root / "catalog")
+        (self.root / "events").mkdir()
+        (self.root / "state").mkdir()
+        self.env = os.environ.copy()
+        self.env["AGENT_BUS_ROOT"] = str(self.root)
+        self.env["AGENT_BUS_SKIP_HOOKS"] = "1"
+        self.publish = ROOT / "bin" / "publish.py"
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def run_json(self, args: list[str]) -> dict:
+        proc = subprocess.run(
+            [sys.executable, str(self.publish), *args],
+            check=True,
+            capture_output=True,
+            text=True,
+            env=self.env,
+            cwd=self.root,
+        )
+        return json.loads(proc.stdout)
+
+    def test_duplicate_short_same_counts_is_hard_blocked(self):
+        common = [
+            "--topic", "ws.short_of_target", "--actor", "day-ledger",
+            "--ref", "date=2026-10-01", "--ref", "submitted=1", "--ref", "target=6",
+            "--delta", "submitted=1", "--delta", "target=6", "--delta", "date=2026-10-01",
+        ]
+        first = self.run_json([*common, "--key", "short-1"])
+        self.assertEqual(first["status"], "published")
+        second = self.run_json([*common, "--key", "short-2", "--actor", "Admin"])
+        self.assertEqual(second["status"], "debounced")
+        self.assertTrue(second["chase_block"]["blocked"])
+        day = datetime.now().astimezone().date().isoformat()
+        lines = (self.root / "events" / f"{day}.jsonl").read_text().strip().splitlines()
+        self.assertEqual(len(lines), 1)
+
+    def test_inventory_empty_may_pass_through_debounce(self):
+        first = self.run_json([
+            "--topic", "ws.short_of_target", "--actor", "day-ledger", "--key", "short-a",
+            "--ref", "date=2026-10-01", "--ref", "submitted=1", "--ref", "target=6",
+            "--delta", "submitted=1", "--delta", "target=6",
+        ])
+        self.assertEqual(first["status"], "published")
+        empty = self.run_json([
+            "--topic", "ws.short_of_target", "--actor", "FTE Apply", "--key", "short-empty",
+            "--ref", "date=2026-10-01", "--ref", "submitted=1", "--ref", "target=6",
+            "--ref", "inventory=empty",
+            "--delta", "submitted=1", "--delta", "target=6",
+        ])
+        self.assertEqual(empty["status"], "published")
+        day = datetime.now().astimezone().date().isoformat()
+        lines = (self.root / "events" / f"{day}.jsonl").read_text().strip().splitlines()
+        self.assertEqual(len(lines), 2)
+
+
+
 if __name__ == "__main__":
     unittest.main()
