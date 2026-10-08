@@ -1,10 +1,10 @@
 {
-  "version": 3,
+  "version": 4,
   "owner": "Admin",
   "rules": {
     "new_topic": "Admin only. Add when >=2 subscribers, recurring, and done_means is nameable. No mid-turn invention.",
     "mandate": "Publish is part of done for catalog topics. Day ledger audits jsonl vs reality and backfills misses.",
-    "dms": "After publish, DM subscribers listed on the topic. Bus is source of truth; DMs are best-effort push.",
+    "dms": "Pull-first (Jim 2026-10-08). After publish, DM only the agents in must_act (resolved by publish.py: first matching must_act_rules entry, else must_act; refs.<key> tokens resolve from event refs; the actor is dropped). subscribers is the pull list: everyone on it reads the bus on its own runs. Bus is source of truth; DMs are best-effort push. ws.short_of_target nudge and chase unchanged.",
     "chase": "Primary (catalog owner; Grok Bot acts as Admin here) owns follow-through. Pull busctl stall, nudge the stall owner, publish chase.owed, verify the next bus event. A chat ack is not proof."
   },
   "follow_through": {
@@ -25,6 +25,8 @@
         "Unemployment",
         "Ops"
       ],
+      "must_act": [],
+      "must_act_note": "GE sync is the publish hook; Unemployment pulls at cert/weekly WS; Admin pulls at ledger; Ops pulls.",
       "required_refs": [
         "company",
         "role",
@@ -47,6 +49,10 @@
         "Ops",
         "Writing Critic"
       ],
+      "must_act": [
+        "Admin"
+      ],
+      "must_act_note": "Admin runs the reject loop; others pull.",
       "required_refs": [
         "company",
         "role",
@@ -63,6 +69,9 @@
       "subscribers": [
         "FTE Apply",
         "Admin"
+      ],
+      "must_act": [
+        "FTE Apply"
       ],
       "required_refs": [
         "company",
@@ -82,6 +91,36 @@
         "FTE Apply",
         "Admin"
       ],
+      "must_act": [],
+      "must_act_rules": [
+        {
+          "when_refs": {
+            "status": "open",
+            "until": "jim_fill"
+          },
+          "must_act": [
+            "Admin"
+          ]
+        },
+        {
+          "when_refs": {
+            "status": "open",
+            "reason": "workday_create_account"
+          },
+          "must_act": [
+            "Admin"
+          ]
+        },
+        {
+          "when_refs": {
+            "needs_jim": true
+          },
+          "must_act": [
+            "Admin"
+          ]
+        }
+      ],
+      "must_act_note": "Admin only when the park needs Jim; else pull-only.",
       "required_refs": [
         "company",
         "role",
@@ -103,6 +142,34 @@
         "FTE Apply",
         "Admin"
       ],
+      "must_act": [
+        "FTE Apply"
+      ],
+      "must_act_rules": [
+        {
+          "when_refs": {
+            "lane": "catalant"
+          },
+          "must_act": [
+            "Investment"
+          ]
+        },
+        {
+          "when_refs": {
+            "lane": "warm_note"
+          },
+          "must_act": [
+            "Admin"
+          ]
+        },
+        {
+          "when_refs": {
+            "lane": "master"
+          },
+          "must_act": []
+        }
+      ],
+      "must_act_note": "lane=fte (or blank) wakes FTE Apply; warm_note wakes Admin to show Jim (Jim sends).",
       "required_refs": [
         "company",
         "role",
@@ -140,6 +207,41 @@
         "Sales",
         "Marketing"
       ],
+      "must_act": [
+        "Admin"
+      ],
+      "must_act_rules": [
+        {
+          "when_refs": {
+            "lane": [
+              "youtube",
+              "social",
+              "listing",
+              "dam",
+              "shorts"
+            ]
+          },
+          "must_act": [
+            "Marketing"
+          ]
+        },
+        {
+          "when_refs": {
+            "lane": [
+              "outreach",
+              "linkedin",
+              "exclusive",
+              "print",
+              "extended",
+              "email"
+            ]
+          },
+          "must_act": [
+            "Sales"
+          ]
+        }
+      ],
+      "must_act_note": "Asset owner lane only (Sales or Marketing, not both); unknown lane -> Admin routes.",
       "required_refs": [
         "lane",
         "packet_path",
@@ -158,6 +260,9 @@
         "Investment",
         "Admin"
       ],
+      "must_act": [
+        "Investment"
+      ],
       "required_refs": [
         "email"
       ],
@@ -174,6 +279,10 @@
         "Admin",
         "Investment"
       ],
+      "must_act": [
+        "Investment"
+      ],
+      "must_act_note": "Actor is dropped from the DM list, so Investment self-publishes DM no one; Admin pulls at ledger.",
       "required_refs": [
         "opportunity_id",
         "band"
@@ -191,6 +300,10 @@
         "FTE Apply",
         "Admin"
       ],
+      "must_act": [
+        "FTE Apply"
+      ],
+      "must_act_note": "Unchanged weekday nudge (Jim SoT lock).",
       "required_refs": [
         "date",
         "submitted",
@@ -219,6 +332,7 @@
       "subscribers": [
         "Admin"
       ],
+      "must_act": [],
       "required_refs": [
         "submitted_on_count"
       ],
@@ -236,6 +350,7 @@
         "Marketing",
         "Ops"
       ],
+      "must_act": [],
       "required_refs": [
         "batch_id",
         "file_count",
@@ -254,6 +369,8 @@
         "Admin",
         "Marketing"
       ],
+      "must_act": [],
+      "must_act_note": "state adobe reasons_pending flags reason gaps; Admin pulls.",
       "required_refs": [
         "date",
         "accepted",
@@ -273,6 +390,10 @@
         "Admin",
         "Marketing"
       ],
+      "must_act": [
+        "Marketing"
+      ],
+      "must_act_note": "Marketing gates the next DAM upload.",
       "required_refs": [
         "date",
         "rejected_count",
@@ -292,6 +413,9 @@
         "Sales",
         "Marketing"
       ],
+      "must_act": [
+        "Sales"
+      ],
       "required_refs": [
         "order_id",
         "sku",
@@ -310,6 +434,10 @@
         "Admin",
         "Sales"
       ],
+      "must_act": [
+        "Sales"
+      ],
+      "must_act_note": "Sales sends under standing auth after Critic PASS.",
       "required_refs": [
         "prospect",
         "asset",
@@ -329,6 +457,7 @@
         "Sales",
         "Marketing"
       ],
+      "must_act": [],
       "required_refs": [
         "prospect",
         "to",
@@ -348,6 +477,11 @@
         "Admin",
         "FTE Apply"
       ],
+      "must_act": [
+        "refs.owner",
+        "FTE Apply"
+      ],
+      "must_act_note": "Unchanged chase (Jim SoT lock): stall owner plus FTE Apply; refs.<key> resolves from the event.",
       "required_refs": [
         "stall_id",
         "owed_topic",
@@ -358,6 +492,6 @@
       "done_means": "The owed topic is on the bus for this stall_id, or status=cleared. busctl stall no longer marks it nudge_due. A chat ack is not proof."
     }
   },
-  "updated_at": "2026-10-06",
-  "updated_note": "2026-10-06: hard-block duplicate ws.short_of_target inside debounce; exclude master CV from critic.pass chase/submit-ready; park-same-turn for Jim-held PASS"
+  "updated_at": "2026-10-08",
+  "updated_note": "2026-10-08: pull-first bus. must_act (DM list) + must_act_rules per topic; subscribers stays the pull list. fte.submit DMs none; critic.pass lane=warm_note wakes Admin."
 }

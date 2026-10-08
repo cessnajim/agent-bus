@@ -25,7 +25,7 @@ Set `AGENT_BUS_ROOT` on the machine that hosts the board. Agent skills must call
 1. Only topics in `catalog/topics.json` (owner adds topics; no mid-turn invention).
 2. Publish is part of **done** for catalog side effects.
 3. Subscribers **pull** (`busctl` / `agent-bus state|today|tail|stall`) before treating chat as truth.
-4. After publish, DM each subscriber listed on the topic (best-effort).
+4. After publish, DM only the agents in stdout `must_act` (best-effort). Everyone else on `subscribers` pulls the bus on its own runs.
 5. Primary runs **chase** when the next catalogued step does not show up. Proof is the next bus event.
 
 ## Follow-through (board + primary + chase)

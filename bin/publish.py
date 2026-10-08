@@ -87,6 +87,8 @@ def main() -> int:
         raise SystemExit(f"unknown topic {args.topic!r}. known: {', '.join(sorted(topics))}")
     meta = topics[args.topic]
     refs = parse_kv(args.ref)
+    must_act = chase.resolve_must_act(meta, refs, args.actor)
+    pull_list = chase.pull_only(meta, must_act)
     missing = [r for r in meta.get("required_refs", []) if r not in refs]
     if missing:
         raise SystemExit(f"missing required refs: {', '.join(missing)}")
@@ -155,6 +157,8 @@ def main() -> int:
                         "path": str(path),
                         "chase_block": debounce_warn,
                         "subscribers": meta.get("subscribers", []),
+                        "must_act": must_act,
+                        "pull_only": pull_list,
                         "done_means": meta.get("done_means"),
                         "event": event,
                     }, indent=2, ensure_ascii=False))
@@ -223,6 +227,8 @@ def main() -> int:
         "status": "published",
         "path": str(path),
         "subscribers": meta.get("subscribers", []),
+        "must_act": must_act,
+        "pull_only": pull_list,
         "done_means": meta.get("done_means"),
         "state_path": str(state_path) if state_path else None,
         "event": event,

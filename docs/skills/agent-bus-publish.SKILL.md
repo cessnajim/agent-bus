@@ -13,7 +13,7 @@ export AGENT_BUS_ROOT="${AGENT_BUS_ROOT:-$HOME/Projects/agent-bus}"
   --ref k=v --note '...'
 ```
 
-Only topics in `catalog/topics.json`. After publish, DM each subscriber from stdout. Subscribers still pull (`busctl stall` included).
+Only topics in `catalog/topics.json`. After publish, DM only the agents in stdout `must_act` (pull-first; empty = no DM). Subscribers still pull (`busctl stall` included).
 
 ## `submitted` is absolute
 

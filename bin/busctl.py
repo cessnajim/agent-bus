@@ -25,6 +25,8 @@ def main():
             k: dict(
                 publishers=v.get("publishers"),
                 subscribers=v.get("subscribers"),
+                must_act=v.get("must_act", v.get("subscribers")),
+                **({"must_act_rules": v.get("must_act_rules")} if v.get("must_act_rules") else {}),
                 required_refs=v.get("required_refs"),
                 done_means=v.get("done_means"),
                 state_file=v.get("state_file"),

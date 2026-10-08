@@ -29,6 +29,45 @@ def bus_root() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
+def _ref_matches(actual, expected) -> bool:
+    if isinstance(expected, list):
+        return any(_ref_matches(actual, e) for e in expected)
+    if actual is None:
+        return False
+    return str(actual).strip().lower() == str(expected).strip().lower()
+
+
+def resolve_must_act(meta: dict, refs: dict | None, actor: str | None = None) -> list[str]:
+    """DM list for one event (pull-first bus, 2026-10-08).
+
+    First must_act_rules entry whose when_refs all match wins; else must_act.
+    A catalog without must_act falls back to subscribers (pre-v4 behavior).
+    "refs.<key>" tokens resolve from the event refs. The actor is dropped.
+    """
+    refs = refs or {}
+    if "must_act" not in meta and "must_act_rules" not in meta:
+        chosen = list(meta.get("subscribers") or [])
+    else:
+        chosen = list(meta.get("must_act") or [])
+        for rule in meta.get("must_act_rules") or []:
+            when = rule.get("when_refs") or {}
+            if when and all(_ref_matches(refs.get(k), v) for k, v in when.items()):
+                chosen = list(rule.get("must_act") or [])
+                break
+    out: list[str] = []
+    for name in chosen:
+        if isinstance(name, str) and name.startswith("refs."):
+            val = refs.get(name[5:])
+            name = str(val).strip() if val not in (None, "") else ""
+        if name and name != actor and name not in out:
+            out.append(name)
+    return out
+
+
+def pull_only(meta: dict, must_act: list[str]) -> list[str]:
+    return [s for s in (meta.get("subscribers") or []) if s not in must_act]
+
+
 def parse_ts(ts) -> datetime | None:
     if not isinstance(ts, str) or not ts:
         return None
