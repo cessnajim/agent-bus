@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Publish one event to the agent topic bus (Fedora). Idempotent on (topic, key) per day."""
+"""Publish one event to the agent topic bus (Fedora). Idempotent on (topic, key) per day.
+
+Times are America/Los_Angeles (chase.BUS_TZ) regardless of the caller's TZ.
+fte.submit refuses a second submit for the same company+source_id or ATS job
+URL found in any event file (exit 3, status duplicate_submit) unless --force
+is passed with a --note saying why it is a genuine reapply.
+"""
 from __future__ import annotations
 
 import argparse
@@ -8,7 +14,6 @@ import json
 import os
 import subprocess
 import sys
-from datetime import datetime
 from pathlib import Path
 
 # bin/ is not a package; chase.py sits beside this script.
@@ -76,7 +81,21 @@ def main() -> int:
     ap.add_argument("--ref", action="append", default=[])
     ap.add_argument("--delta", action="append", default=[])
     ap.add_argument("--note", default="")
+    ap.add_argument(
+        "--force",
+        action="store_true",
+        help=(
+            "fte.submit only: publish even though an earlier fte.submit has the same "
+            "company+source_id or ATS job URL. Use only for a genuine reapply "
+            "(new req reposted under the same id, recruiter asked Jim to reapply) "
+            "and say why in --note; the event is stamped reapply=true."
+        ),
+    )
     args = ap.parse_args()
+    if args.force and args.topic != "fte.submit":
+        raise SystemExit("--force only applies to --topic fte.submit")
+    if args.force and not args.note.strip():
+        raise SystemExit("--force needs --note explaining the genuine reapply")
 
     if args.note and len(args.note) > NOTE_MAX:
         raise SystemExit(f"note is {len(args.note)} chars; max {NOTE_MAX}")
@@ -93,9 +112,10 @@ def main() -> int:
     if missing:
         raise SystemExit(f"missing required refs: {', '.join(missing)}")
 
+    now = chase.bus_now()
     event = {
         "topic": args.topic,
-        "ts": datetime.now().astimezone().isoformat(timespec="seconds"),
+        "ts": now.isoformat(timespec="seconds"),
         "idempotency_key": args.key,
         "actor": args.actor,
         "refs": refs,
@@ -104,7 +124,6 @@ def main() -> int:
     if args.note:
         event["note"] = args.note
 
-    now = datetime.now().astimezone()
     EVENTS.mkdir(parents=True, exist_ok=True)
     day = now.date().isoformat()
     path = EVENTS / f"{day}.jsonl"
@@ -126,13 +145,37 @@ def main() -> int:
                     print(json.dumps({"status": "duplicate", "path": str(path), "event": prev}, indent=2))
                     return 0
 
+            # Duplicate-submit guard: same company+source_id or job URL in ANY
+            # day file. Runs under the publish lock so two racing agents cannot
+            # both land the same application.
+            if args.topic == "fte.submit":
+                dupes = chase.find_duplicate_submits(EVENTS, refs)
+                if dupes and not args.force:
+                    print(json.dumps({
+                        "status": "duplicate_submit",
+                        "duplicate": True,
+                        "published": False,
+                        "message": (
+                            "fte.submit already on the bus for this company+source_id or job URL; "
+                            "not published, no GE sync. If this is a genuine reapply, rerun with "
+                            "--force --note '<why>'."
+                        ),
+                        "prior": dupes,
+                        "event": event,
+                    }, indent=2, ensure_ascii=False))
+                    return 3
+                if dupes:
+                    event["reapply"] = True
+                    event["duplicate_of"] = [d.get("idempotency_key") for d in dupes]
+
             # Fail closed on corrupt state BEFORE appending the event.
             cur = load_state(state_path) if state_path else None
 
             # --delta/--ref submitted is the absolute count for the day, not +1.
             # Floor the snapshot at today's fte.submit ledger so a second
             # submitted=1 cannot leave state stuck at 1. Jsonl keeps the claim.
-            ledger = sum(1 for prev in prior if prev.get("topic") == "fte.submit")
+            # Ledger counts by PT day of ts (legacy Eastern-filed events normalized on read).
+            ledger = sum(1 for prev in chase.events_for_bus_day(EVENTS, day) if prev.get("topic") == "fte.submit")
             if args.topic == "fte.submit":
                 ledger += 1
             writes_submitted = "submitted" in refs or "submitted" in event["state_delta"]

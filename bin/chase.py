@@ -8,8 +8,26 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime, timedelta
+import re
+import time
+from datetime import date, datetime, timedelta
 from pathlib import Path
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+from zoneinfo import ZoneInfo
+
+# The bus runs on Pacific time no matter what TZ the calling shell has
+# (local-exec shells have shipped with TZ=America/New_York). Event ts,
+# day-file names, and "today" all roll over at PT midnight. Older events
+# carry -04:00 offsets; they are normalized on read, never rewritten.
+BUS_TZ_NAME = "America/Los_Angeles"
+BUS_TZ = ZoneInfo(BUS_TZ_NAME)
+os.environ["TZ"] = BUS_TZ_NAME
+if hasattr(time, "tzset"):
+    time.tzset()
+
+
+def bus_now() -> datetime:
+    return datetime.now(BUS_TZ)
 
 MATCH_REF_KEYS = (
     "company",
@@ -76,8 +94,139 @@ def parse_ts(ts) -> datetime | None:
     except ValueError:
         return None
     if dt.tzinfo is None:
-        return dt.astimezone()
-    return dt
+        return dt.replace(tzinfo=BUS_TZ)
+    return dt.astimezone(BUS_TZ)
+
+
+def ts_sort_key(ts) -> float:
+    """Chronological sort key across mixed offsets (-04:00 legacy, -07:00/-08:00 PT)."""
+    parsed = parse_ts(ts)
+    return parsed.timestamp() if parsed else float("-inf")
+
+
+def bus_day(ts) -> str:
+    """PT calendar day (YYYY-MM-DD) of an event ts, whatever offset it was written with."""
+    parsed = parse_ts(ts)
+    return parsed.date().isoformat() if parsed else ""
+
+
+def read_jsonl(path: Path) -> list[dict]:
+    rows: list[dict] = []
+    if not path.exists():
+        return rows
+    for line in path.read_text().splitlines():
+        if not line.strip():
+            continue
+        try:
+            ev = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(ev, dict):
+            rows.append(ev)
+    return rows
+
+
+def events_for_bus_day(events_dir: Path, day: str | date) -> list[dict]:
+    """Events whose ts falls on PT `day`.
+
+    Legacy events were filed by Eastern date, so PT evening (21:00-24:00)
+    events can sit in the next day's file and the first hours of a file can
+    belong to the previous PT day. Read the day file plus the next one and
+    keep rows by PT date of ts.
+    """
+    d = day if isinstance(day, date) else date.fromisoformat(day)
+    want = d.isoformat()
+    rows: list[dict] = []
+    for f in (d, d + timedelta(days=1)):
+        for ev in read_jsonl(events_dir / f"{f.isoformat()}.jsonl"):
+            if bus_day(ev.get("ts")) == want:
+                rows.append(ev)
+    rows.sort(key=lambda ev: ts_sort_key(ev.get("ts")))
+    return rows
+
+
+# --- duplicate fte.submit guard -------------------------------------------
+
+SUBMIT_URL_KEYS = ("job_url", "ats_url", "apply_url", "url")
+_COMPANY_SUFFIXES = {
+    "inc", "incorporated", "llc", "ltd", "limited", "corp", "corporation",
+    "co", "company", "plc", "gmbh", "bv", "sa", "ag",
+}
+
+
+def normalize_company(value) -> str:
+    if value is None:
+        return ""
+    words = re.sub(r"[^a-z0-9]+", " ", str(value).casefold()).split()
+    while len(words) > 1 and words[-1] in _COMPANY_SUFFIXES:
+        words.pop()
+    return " ".join(words)
+
+
+def normalize_source_id(value) -> str:
+    if value is None or isinstance(value, bool):
+        return ""
+    return str(value).strip().casefold()
+
+
+def normalize_job_url(value) -> str:
+    if not isinstance(value, str) or not value.strip():
+        return ""
+    try:
+        parts = urlsplit(value.strip())
+    except ValueError:
+        return ""
+    if not parts.netloc:
+        return ""
+    host = parts.netloc.casefold()
+    if host.startswith("www."):
+        host = host[4:]
+    path = parts.path.rstrip("/")
+    query = [
+        (k, v)
+        for k, v in parse_qsl(parts.query, keep_blank_values=True)
+        if not k.casefold().startswith("utm_") and k.casefold() not in ("source", "src", "ref", "gh_src", "lever-source")
+    ]
+    query.sort()
+    return urlunsplit(("https", host, path, urlencode(query), ""))
+
+
+def submit_identity(refs: dict) -> dict:
+    refs = refs or {}
+    return {
+        "company": normalize_company(refs.get("company")),
+        "source_id": normalize_source_id(refs.get("source_id")),
+        "urls": sorted({u for u in (normalize_job_url(refs.get(k)) for k in SUBMIT_URL_KEYS) if u}),
+    }
+
+
+def find_duplicate_submits(events_dir: Path, refs: dict) -> list[dict]:
+    """Prior fte.submit events (any day file) for the same company+source_id or job URL."""
+    want = submit_identity(refs)
+    hits: list[dict] = []
+    if not events_dir.exists():
+        return hits
+    for path in sorted(events_dir.glob("*.jsonl")):
+        for ev in read_jsonl(path):
+            if ev.get("topic") != "fte.submit":
+                continue
+            have = submit_identity(ev.get("refs") or {})
+            why = []
+            if want["company"] and want["source_id"] and (want["company"], want["source_id"]) == (have["company"], have["source_id"]):
+                why.append("company+source_id")
+            if set(want["urls"]) & set(have["urls"]):
+                why.append("job_url")
+            if why:
+                hits.append({
+                    "file": path.name,
+                    "ts": ev.get("ts"),
+                    "idempotency_key": ev.get("idempotency_key"),
+                    "company": (ev.get("refs") or {}).get("company"),
+                    "role": (ev.get("refs") or {}).get("role"),
+                    "source_id": (ev.get("refs") or {}).get("source_id"),
+                    "matched_on": why,
+                })
+    return hits
 
 
 def int_or_none(value):
@@ -170,7 +319,7 @@ def event_is_after(event: dict, trigger: dict) -> bool:
 
 
 def order_events(events: list[dict]) -> list[dict]:
-    decorated = sorted(enumerate(events), key=lambda pair: (pair[1].get("ts") or "", pair[0]))
+    decorated = sorted(enumerate(events), key=lambda pair: (ts_sort_key(pair[1].get("ts")), pair[0]))
     ordered = []
     for seq, (_, ev) in enumerate(decorated):
         copy = dict(ev)
@@ -318,13 +467,12 @@ def load_recent_events(events_dir: Path, now: datetime, lookback_days: int) -> l
                 continue
             if isinstance(ev, dict):
                 rows.append(ev)
-    rows.sort(key=lambda ev: ev.get("ts") or "")
+    rows.sort(key=lambda ev: ts_sort_key(ev.get("ts")))
     return rows
 
 
 def _event_day(ev: dict) -> str:
-    ts = ev.get("ts") or ""
-    return ts[:10] if len(ts) >= 10 else ""
+    return bus_day(ev.get("ts"))
 
 
 def _age_minutes(now: datetime, ts) -> int | None:
@@ -349,7 +497,7 @@ def _state_is_today(state: dict, today: str) -> bool:
         date = nested.get("date")
     if date not in (None, ""):
         return str(date)[:10] == today
-    return str(state.get("updated_at") or "")[:10] == today
+    return bus_day(state.get("updated_at")) == today
 
 
 def _collect_numbers(events: list[dict], today: str, field: str) -> list[int]:
@@ -545,7 +693,7 @@ def _expect_stalls(topic: str, chase: dict, events: list[dict], follow: dict, no
             continue
         ident = ":".join([topic] + [norm(refs.get(key)) for key in match_keys]) if match_keys else f"{topic}:{ev.get('idempotency_key') or ev.get('ts')}"
         prev = open_by_id.get(ident)
-        if prev is None or str(ev.get("ts") or "") >= str(prev.get("ts") or ""):
+        if prev is None or ts_sort_key(ev.get("ts")) >= ts_sort_key(prev.get("ts")):
             open_by_id[ident] = ev
     rows = []
     for ident, ev in open_by_id.items():
@@ -657,7 +805,7 @@ def detect_stalls(catalog: dict, events: list[dict], states: dict, now: datetime
 
 def build_stall_report(root: Path | None = None, now: datetime | None = None) -> dict:
     root = root or bus_root()
-    now = now or datetime.now().astimezone()
+    now = now or bus_now()
     catalog_path = root / "catalog" / "topics.json"
     catalog = json.loads(catalog_path.read_text()) if catalog_path.exists() else {"topics": {}}
     follow = catalog.get("follow_through") or {}

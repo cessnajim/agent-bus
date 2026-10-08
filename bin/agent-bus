@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Portable entry: agent-bus topics | state | today | tail | publish ...
 set -euo pipefail
+# Bus time is Pacific: ts, day files, and "today" roll over at PT midnight
+# even when the calling shell exports another TZ (local-exec ships New York).
+export TZ=America/Los_Angeles
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 export AGENT_BUS_ROOT="${AGENT_BUS_ROOT:-$ROOT}"
 cmd="${1:-}"

@@ -2,7 +2,6 @@
 """Inspect agent-bus: topics | state | today | tail | stall | owed"""
 from __future__ import annotations
 import json, sys
-from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -48,17 +47,13 @@ def main():
         print(json.dumps(chase.build_stall_report(ROOT), indent=2, ensure_ascii=False))
         return 0
 
-    day = datetime.now().astimezone().date().isoformat()
-    path = EVENTS / f"{day}.jsonl"
-    rows = []
-    if path.exists():
-        for line in path.read_text().splitlines():
-            if not line.strip():
-                continue
-            ev = json.loads(line)
-            if getattr(args, "topic", None) and ev.get("topic") != args.topic:
-                continue
-            rows.append(ev)
+    # "today" = the America/Los_Angeles calendar day. Legacy events were filed
+    # by Eastern date with -04:00 offsets; events_for_bus_day normalizes them.
+    day = getattr(args, "day", None) or chase.bus_now().date().isoformat()
+    rows = [
+        ev for ev in chase.events_for_bus_day(EVENTS, day)
+        if not (getattr(args, "topic", None) and ev.get("topic") != args.topic)
+    ]
     if args.cmd == "today":
         print(json.dumps(rows, indent=2, ensure_ascii=False)); return 0
     print(json.dumps(rows[-args.n:], indent=2, ensure_ascii=False)); return 0
@@ -71,6 +66,7 @@ def argparse_parser():
     sp.add_parser("topics")
     p_state = sp.add_parser("state"); p_state.add_argument("name")
     p_today = sp.add_parser("today"); p_today.add_argument("--topic")
+    p_today.add_argument("--day", help="PT date YYYY-MM-DD (default: today in America/Los_Angeles)")
     p_tail = sp.add_parser("tail"); p_tail.add_argument("--topic"); p_tail.add_argument("--n", type=int, default=20)
     sp.add_parser("stall", help="Owed next steps: WS short, Critic PASS without submit/park, open parks")
     sp.add_parser("owed", help="Alias of stall")
