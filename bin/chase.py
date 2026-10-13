@@ -276,6 +276,24 @@ def norm_path(value) -> str:
     return norm(str(value).rstrip("/"))
 
 
+def companies_compatible(left, right) -> bool:
+    """Company gate for chase proofs (2026-10-13 optimize).
+
+    Critic often records the legal name ("Anduril Industries", "Ethos Risk
+    Services") while fte.submit records the short name ("Anduril", "Ethos").
+    Treat a whole-word prefix as the same company; the durable id
+    (source_id / packet_path) still has to match after this gate.
+    """
+    a, b = normalize_company(left), normalize_company(right)
+    if not a or not b:
+        return False
+    if a == b:
+        return True
+    aw, bw = a.split(), b.split()
+    short, long_ = (aw, bw) if len(aw) <= len(bw) else (bw, aw)
+    return long_[: len(short)] == short
+
+
 def chase_refs_match(left: dict, right: dict, keys: list) -> bool:
     """Match a chase trigger to a later proof event.
 
@@ -287,7 +305,7 @@ def chase_refs_match(left: dict, right: dict, keys: list) -> bool:
     left = left or {}
     right = right or {}
     if left.get("company") not in (None, "") and right.get("company") not in (None, ""):
-        if not values_match(left.get("company"), right.get("company")):
+        if not companies_compatible(left.get("company"), right.get("company")):
             return False
 
     ls, rs = left.get("source_id"), right.get("source_id")

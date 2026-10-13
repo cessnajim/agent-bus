@@ -504,3 +504,13 @@ class DebounceHardBlockTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_chase_company_prefix_with_packet_path_clears():
+    from chase import chase_refs_match
+    trig = {"company": "Anduril Industries", "role": "Senior Director, Software Engineering",
+            "packet_path": "/workspace/ws-apply-2026-10-12/packets/anduril-sr-dir-swe-bellevue/"}
+    proof = {"company": "Anduril", "role": "Senior Director, Software Engineering",
+             "packet_path": "/workspace/ws-apply-2026-10-12/packets/anduril-sr-dir-swe-bellevue"}
+    assert chase_refs_match(trig, proof, ["company", "role"])
+    assert not chase_refs_match(trig, {**proof, "company": "Andersen"}, ["company", "role"])
