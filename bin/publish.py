@@ -73,6 +73,16 @@ def atomic_write_json(path: Path, data: dict) -> None:
     os.replace(tmp, path)
 
 
+def resolve_topic(topics: dict, topic: str):
+    """Exact catalog match, else a wildcard family entry like 'travel.*'."""
+    if topic in topics and not topic.endswith(".*"):
+        return topics[topic]
+    head, _, tail = topic.partition(".")
+    if tail and tail != "*" and f"{head}.*" in topics:
+        return topics[f"{head}.*"]
+    return None
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--topic", required=True)
@@ -102,9 +112,9 @@ def main() -> int:
 
     catalog = json.loads(CATALOG.read_text())
     topics = catalog["topics"]
-    if args.topic not in topics:
+    meta = resolve_topic(topics, args.topic)
+    if meta is None:
         raise SystemExit(f"unknown topic {args.topic!r}. known: {', '.join(sorted(topics))}")
-    meta = topics[args.topic]
     refs = parse_kv(args.ref)
     must_act = chase.resolve_must_act(meta, refs, args.actor)
     pull_list = chase.pull_only(meta, must_act)
