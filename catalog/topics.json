@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "owner": "Admin",
   "rules": {
     "new_topic": "Admin only. Add when >=2 subscribers, recurring, and done_means is nameable. No mid-turn invention.",
@@ -177,7 +177,7 @@
         "lane"
       ],
       "state_file": null,
-      "done_means": "Submit under standing apply-auth or Jim yes executed, or fte.park if blocked. Jim-held PASSes: prefer fte.park in the same turn (status=open, do_not_reprompt) so chase does not stall waiting for Jim. Chase proof is a later fte.submit or fte.park for the same company+source_id (or same packet_path); role-string mismatch alone must not stall. Master CV (company=master or source_id containing master) is not an application — excluded from chase stalls and submit-ready counts.",
+      "done_means": "Submit under standing apply-auth or Jim yes executed, or fte.park if blocked. Jim-held PASSes: prefer fte.park in the same turn (status=open, do_not_reprompt) so chase does not stall waiting for Jim. Chase proof is a later fte.submit or fte.park for the same company+source_id (or same packet_path); role-string mismatch alone must not stall. Master CV (company=master or source_id containing master) is not an application \u2014 excluded from chase stalls and submit-ready counts.",
       "chase": {
         "owner": "FTE Apply",
         "expect": [
@@ -207,7 +207,8 @@
         "Sales",
         "Marketing",
         "Social Media",
-        "SEO Auditor"
+        "SEO Auditor",
+        "Investment"
       ],
       "must_act": [
         "Admin"
@@ -216,11 +217,13 @@
         {
           "when_refs": {
             "lane": [
-              "youtube",
-              "social",
-              "listing",
               "dam",
-              "shorts"
+              "listing",
+              "oawj_shop",
+              "shop",
+              "shorts",
+              "social",
+              "youtube"
             ]
           },
           "must_act": [
@@ -241,9 +244,23 @@
           "must_act": [
             "Sales"
           ]
+        },
+        {
+          "when_refs": {
+            "lane": [
+              "marketplace",
+              "catalant",
+              "btg",
+              "evona",
+              "truebridge"
+            ]
+          },
+          "must_act": [
+            "Investment"
+          ]
         }
       ],
-      "must_act_note": "Asset owner lane only (Sales or Marketing, not both); unknown lane -> Admin routes.",
+      "must_act_note": "Asset owner lane only: Marketing (youtube/social/listing/dam/shorts/oawj_shop), Sales (outreach/email/exclusive...), Investment (marketplace/catalant/btg/evona/truebridge); unknown lane -> Admin routes.",
       "required_refs": [
         "lane",
         "packet_path",
@@ -660,10 +677,34 @@
       ],
       "state_file": "bustest",
       "done_means": "Ping visible in state/bustest.json; ignore in ledgers (refs.test=true)."
+    },
+    "marketplace.pitch_submitted": {
+      "description": "Non-Catalant marketplace application/pitch submitted under standing send-auth after Critic PASS (BTG, EVONA, TrueBridge; Catalant keeps catalant.pitch_submitted). Added 2026-10-20 harness review.",
+      "publishers": [
+        "Investment",
+        "Admin"
+      ],
+      "subscribers": [
+        "Admin",
+        "Investment",
+        "Expense Manager",
+        "Subscription Cleaner"
+      ],
+      "must_act": [],
+      "must_act_note": "Pull-only. Admin reads at day ledger / weekly revenue tally.",
+      "required_refs": [
+        "network",
+        "opportunity_id",
+        "role",
+        "rate",
+        "status"
+      ],
+      "state_file": "marketplace",
+      "done_means": "Submit confirm saved (packet/screenshot) + event on bus; day ledger cash path and weekly tally see it"
     }
   },
-  "updated_at": "2026-10-15",
-  "updated_note": "2026-10-15: six new agents (Travel, Stills & Clips, Social Media, SEO Auditor, Subscription Cleaner, Expense Manager); topics travel.* (wildcard), assets.ready, social.post, seo.audit, subs.review, expense.logged, bus.test. 2026-10-08: pull-first bus. must_act (DM list) + must_act_rules per topic; subscribers stays the pull list. fte.submit DMs none; critic.pass lane=warm_note wakes Admin.",
+  "updated_at": "2026-10-20",
+  "updated_note": "2026-10-20 harness review: marketplace.pitch_submitted (BTG/EVONA/TrueBridge); critic.pass.outbound lane=marketplace->Investment, oawj_shop->Marketing. 2026-10-20 harness review: marketplace.pitch_submitted (BTG/EVONA/TrueBridge); critic.pass.outbound lane=marketplace->Investment, oawj_shop->Marketing. 2026-10-15: six new agents (Travel, Stills & Clips, Social Media, SEO Auditor, Subscription Cleaner, Expense Manager); topics travel.* (wildcard), assets.ready, social.post, seo.audit, subs.review, expense.logged, bus.test. 2026-10-08: pull-first bus. must_act (DM list) + must_act_rules per topic; subscribers stays the pull list. fte.submit DMs none; critic.pass lane=warm_note wakes Admin.",
   "agents": {
     "Travel": "34ff498e-f62a-48ec-bda8-8b8ea4a62ae4",
     "Stills & Clips": "ca62e4bf-ae28-4748-a4b6-5c016f0a83cd",
