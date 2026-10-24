@@ -839,7 +839,8 @@
       },
       "Unemployment": {
         "silent_days": 8,
-        "quiet_ok": "One weekly cert (Sunday); no other events expected."
+        "quiet_ok": "One weekly cert (Sunday); no other events expected.",
+        "since": "2026-10-18"
       }
     },
     "expected_downstream": [
