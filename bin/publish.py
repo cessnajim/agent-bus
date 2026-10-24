@@ -142,6 +142,8 @@ def main() -> int:
     submitted_floor = None
     submitted_stored = None
     debounce_warn = None
+    parks_autoclosed = []
+    parks_autoclose_error = None
     chase_cleared: list[str] = []
     result_chase_error = None
 
@@ -223,6 +225,15 @@ def main() -> int:
                 os.fsync(f.fileno())
 
             if state_path is not None and cur is not None:
+                # ws day rollover (2026-10-21 optimize): a new PT bus day starts
+                # with short=0 so yesterday's EOD short cannot stick (hit 10/17, 10/20).
+                if state_name == "ws":
+                    st = cur.setdefault("state", {})
+                    if st.get("date") and st.get("date") != day:
+                        cur["state"] = {"date": day, "submitted": 0,
+                                        "target": st.get("target", 6), "short": 0}
+                        cur["date"] = day
+                        cur["submitted"] = 0
                 # topic / last_key / updated_at / last_actor = last event on this file.
                 # refs = last event only (jsonl is the audit; no bag merge across topics).
                 # Hand fields outside this merge stay until updated in the same turn as publish.
@@ -234,6 +245,13 @@ def main() -> int:
                     "refs": refs,
                 })
                 cur.setdefault("state", {}).update(event["state_delta"])
+                # Catalant pitch clock (2026-10-23 optimize): state.submitted_at went
+                # stale on 10/20 and 10/22 when pitch publishes carried no state_delta.
+                if args.topic == "catalant.pitch_submitted" and "submitted_at" not in event["state_delta"]:
+                    st = cur.setdefault("state", {})
+                    st["submitted_at"] = event["ts"]
+                    if refs.get("opportunity_id"):
+                        st["last_opportunity_id"] = refs["opportunity_id"]
                 # Top-level mirrors: refs first, then state_delta so delta wins on conflict.
                 for k in ("submitted", "target", "date", "holds", "submitted_on_count", "email", "band"):
                     if k in refs:
@@ -249,6 +267,21 @@ def main() -> int:
                 if args.topic == "chase.owed" and refs.get("stall_id") is not None:
                     chase.apply_owed_row(cur, refs, event, args.key, args.actor)
                 atomic_write_json(state_path, cur)
+
+            # fte.submit resolves any matching open park (2026-10-20 optimize:
+            # Care Access + 4MP stayed "open" after submit on 10/19).
+            if args.topic == "fte.submit":
+                parks_path = STATE / "parks.json"
+                try:
+                    parks_cur = load_state(parks_path) if parks_path.exists() else None
+                except SystemExit as exc:
+                    parks_cur = None
+                    parks_autoclose_error = str(exc)
+                if isinstance(parks_cur, dict):
+                    parks_autoclosed = chase.autoclose_parks_for_submit(parks_cur, refs, event, args.key, args.actor)
+                    if parks_autoclosed:
+                        parks_cur["updated_at"] = event["ts"]
+                        atomic_write_json(parks_path, parks_cur)
 
             if args.topic != "chase.owed":
                 owed_path = STATE / "owed.json"
@@ -292,6 +325,10 @@ def main() -> int:
         result["chase_warn"] = debounce_warn
     if chase_cleared:
         result["chase_cleared"] = chase_cleared
+    if parks_autoclosed:
+        result["parks_autoclosed"] = parks_autoclosed
+    if parks_autoclose_error:
+        result["parks_autoclose_error"] = parks_autoclose_error
     if result_chase_error:
         result["chase_clear_error"] = result_chase_error
 

@@ -284,14 +284,29 @@ def companies_compatible(left, right) -> bool:
     Treat a whole-word prefix as the same company; the durable id
     (source_id / packet_path) still has to match after this gate.
     """
-    a, b = normalize_company(left), normalize_company(right)
-    if not a or not b:
-        return False
-    if a == b:
-        return True
-    aw, bw = a.split(), b.split()
-    short, long_ = (aw, bw) if len(aw) <= len(bw) else (bw, aw)
-    return long_[: len(short)] == short
+    # 2026-10-22 optimize: also compare with parentheticals dropped, so
+    # "Aquatic Informatics (Hach/Veralto)" == "Aquatic Informatics (Veralto)"
+    # and "Salesforce (Slack)" == "Salesforce".
+    def _variants(v):
+        out = {normalize_company(v)}
+        out.add(normalize_company(re.sub(r"\([^)]*\)", " ", str(v or ""))))
+        return {x for x in out if x}
+
+    for a in _variants(left):
+        for b in _variants(right):
+            if a == b:
+                return True
+            aw, bw = a.split(), b.split()
+            short, long_ = (aw, bw) if len(aw) <= len(bw) else (bw, aw)
+            if long_[: len(short)] == short:
+                return True
+    return False
+
+
+def bare_source_id(value) -> str:
+    """'workday:JR361288' and 'JR361288' are the same req (2026-10-22 optimize)."""
+    s = norm(value)
+    return re.sub(r"^[a-z_\-]+:", "", s) if s else s
 
 
 def chase_refs_match(left: dict, right: dict, keys: list) -> bool:
@@ -309,7 +324,7 @@ def chase_refs_match(left: dict, right: dict, keys: list) -> bool:
             return False
 
     ls, rs = left.get("source_id"), right.get("source_id")
-    if ls not in (None, "") and rs not in (None, "") and values_match(ls, rs):
+    if ls not in (None, "") and rs not in (None, "") and (values_match(ls, rs) or bare_source_id(ls) == bare_source_id(rs)):
         return True
 
     lp, rp = left.get("packet_path"), right.get("packet_path")
@@ -917,3 +932,53 @@ def short_republish_warning(prior_events: list[dict], refs: dict, delta: dict, d
             "(catalog: Admin/day-ledger); do not republish as follow-through."
         ),
     }
+
+
+def _norm_park_id(raw) -> str:
+    s = str(raw or "").strip().lower()
+    if ":" in s:
+        s = s.split(":")[-1].strip()
+    return s
+
+
+def _same_company(a, b) -> bool:
+    a = str(a or "").strip().lower()
+    b = str(b or "").strip().lower()
+    if not a or not b:
+        return False
+    return a == b or a.startswith(b) or b.startswith(a)
+
+
+def autoclose_parks_for_submit(cur: dict, refs: dict, event: dict, key: str, actor: str) -> list[str]:
+    """Close open/parked parks that a fresh fte.submit resolves (added 2026-10-20 optimize).
+
+    Match = same company (case-insensitive, prefix ok) AND same source_id after
+    stripping an 'ats:' prefix, or one id a prefix of the other (>=8 chars).
+    Returns the park ids closed. Never raises on odd rows.
+    """
+    sid = _norm_park_id(refs.get("source_id"))
+    if len(sid) < 4:
+        return []
+    closed: list[str] = []
+    parks_map = cur.get("parks") or {}
+    for pid, row in parks_map.items():
+        if not isinstance(row, dict) or row.get("status") not in ("open", "parked"):
+            continue
+        if not _same_company(row.get("company"), refs.get("company")):
+            continue
+        rid = _norm_park_id(row.get("source_id") if row.get("source_id") not in (None, "") else pid)
+        short, long_ = sorted((rid, sid), key=len)
+        if rid == sid or (len(short) >= 8 and long_.startswith(short)):
+            row.update({
+                "status": "closed",
+                "reason": "submitted",
+                "do_not_reprompt": True,
+                "until": None,
+                "updated_at": event.get("ts"),
+                "key": f"{key}-park-autoclose",
+                "actor": f"{actor} (fte.submit autoclose)",
+            })
+            closed.append(str(pid))
+    if closed:
+        cur["open_count"] = sum(1 for r in parks_map.values() if isinstance(r, dict) and r.get("status") == "open")
+    return closed
