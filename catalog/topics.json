@@ -731,10 +731,29 @@
       ],
       "state_file": "youtube",
       "done_means": "Video is public (oEmbed 200); Critic packet key in refs.critic_key; ledger in yt-harvest updated. Social Media/SEO/Sales pull the url from the bus instead of asking Marketing."
+    },
+    "ui.cert_filed": {
+      "description": "Idaho UI weekly certification filed (Unemployment). Weekly, Sunday window; confirmation number is the proof.",
+      "publishers": [
+        "Unemployment",
+        "Admin"
+      ],
+      "subscribers": [
+        "Admin",
+        "Investment",
+        "Grok Bot"
+      ],
+      "must_act": [],
+      "required_refs": [
+        "week",
+        "confirmation"
+      ],
+      "state_file": "ui",
+      "done_means": "Cert for the week is filed on Idaho Dept of Labor and the confirmation number is on the bus; chat claims without it are not proof. Silence >8 days = missed cert (coverage watchdog)."
     }
   },
   "updated_at": "2026-10-23",
-  "updated_note": "2026-10-23 bus robustness (Jim): youtube.published topic; coverage block (silent thresholds, expected downstream events); critic.pass.outbound lanes oawj_youtube/adobe_stock/oawj_licensing/oawj_sales/investment routed to owners; sender text fixed to contact@. Earlier: 2026-10-20 harness review: marketplace.pitch_submitted (BTG/EVONA/TrueBridge); critic.pass.outbound lane=marketplace->Investment, oawj_shop->Marketing",
+  "updated_note": "2026-10-23 bus robustness (Jim): youtube.published + ui.cert_filed topics; coverage block (silent thresholds, expected downstream events); critic.pass.outbound lanes oawj_youtube/adobe_stock/oawj_licensing/oawj_sales/investment routed to owners; sender text fixed to contact@. Earlier: 2026-10-20 harness review: marketplace.pitch_submitted (BTG/EVONA/TrueBridge); critic.pass.outbound lane=marketplace->Investment, oawj_shop->Marketing",
   "agents": {
     "Travel": "34ff498e-f62a-48ec-bda8-8b8ea4a62ae4",
     "Stills & Clips": "ca62e4bf-ae28-4748-a4b6-5c016f0a83cd",
@@ -817,6 +836,10 @@
       "Ops": {
         "exempt": true,
         "quiet_ok": "Ops side effects (shop orders, Catalant email confirm, Adobe review) are published by Admin; Ops is not expected to publish."
+      },
+      "Unemployment": {
+        "silent_days": 8,
+        "quiet_ok": "One weekly cert (Sunday); no other events expected."
       }
     },
     "expected_downstream": [
