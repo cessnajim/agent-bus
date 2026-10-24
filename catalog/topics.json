@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "owner": "Admin",
   "rules": {
     "new_topic": "Admin only. Add when >=2 subscribers, recurring, and done_means is nameable. No mid-turn invention.",
@@ -177,7 +177,7 @@
         "lane"
       ],
       "state_file": null,
-      "done_means": "Submit under standing apply-auth or Jim yes executed, or fte.park if blocked. Jim-held PASSes: prefer fte.park in the same turn (status=open, do_not_reprompt) so chase does not stall waiting for Jim. Chase proof is a later fte.submit or fte.park for the same company+source_id (or same packet_path); role-string mismatch alone must not stall. Master CV (company=master or source_id containing master) is not an application \u2014 excluded from chase stalls and submit-ready counts.",
+      "done_means": "Submit under standing apply-auth or Jim yes executed, or fte.park if blocked. Jim-held PASSes: prefer fte.park in the same turn (status=open, do_not_reprompt) so chase does not stall waiting for Jim. Chase proof is a later fte.submit or fte.park for the same company+source_id (or same packet_path); role-string mismatch alone must not stall. Master CV (company=master or source_id containing master) is not an application — excluded from chase stalls and submit-ready counts.",
       "chase": {
         "owner": "FTE Apply",
         "expect": [
@@ -223,7 +223,9 @@
               "shop",
               "shorts",
               "social",
-              "youtube"
+              "youtube",
+              "oawj_youtube",
+              "adobe_stock"
             ]
           },
           "must_act": [
@@ -238,7 +240,9 @@
               "exclusive",
               "print",
               "extended",
-              "email"
+              "email",
+              "oawj_licensing",
+              "oawj_sales"
             ]
           },
           "must_act": [
@@ -252,7 +256,8 @@
               "catalant",
               "btg",
               "evona",
-              "truebridge"
+              "truebridge",
+              "investment"
             ]
           },
           "must_act": [
@@ -260,7 +265,7 @@
           ]
         }
       ],
-      "must_act_note": "Asset owner lane only: Marketing (youtube/social/listing/dam/shorts/oawj_shop), Sales (outreach/email/exclusive...), Investment (marketplace/catalant/btg/evona/truebridge); unknown lane -> Admin routes.",
+      "must_act_note": "Asset owner lane only: Marketing (youtube/social/listing/dam/shorts/oawj_shop), Sales (outreach/email/exclusive...), Investment (marketplace/catalant/btg/evona/truebridge); unknown lane -> Admin routes. v7 (2026-10-23): lanes oawj_youtube/adobe_stock->Marketing, oawj_licensing/oawj_sales->Sales, investment->Investment were falling through to Admin.",
       "required_refs": [
         "lane",
         "packet_path",
@@ -469,10 +474,10 @@
         "draft_path"
       ],
       "state_file": "shop",
-      "done_means": "After Critic PASS, Sales/Admin may send From jim@northidaholabs.com under standing auth; publish shop.exclusive_sent; Admin FYI after the fact. Jim only for strategy/pricing/exceptions."
+      "done_means": "After Critic PASS, Sales/Admin may send From Jim Coleman <contact@northidaholabs.com> under standing auth (Jim 2026-10-17; replies Jim sends himself go From jim@); publish shop.exclusive_sent; Admin FYI after the fact. Jim only for strategy/pricing/exceptions."
     },
     "shop.exclusive_sent": {
-      "description": "exclusive/print/extended outreach SENT From jim@",
+      "description": "exclusive/print/extended/licensing outreach SENT (From contact@northidaholabs.com for the licensing run; Jim's own replies From jim@)",
       "publishers": [
         "Sales",
         "Admin"
@@ -701,10 +706,35 @@
       ],
       "state_file": "marketplace",
       "done_means": "Submit confirm saved (packet/screenshot) + event on bus; day ledger cash path and weekly tally see it"
+    },
+    "youtube.published": {
+      "description": "A video or Short went PUBLIC on an Out and About with Jim (OAWJ) YouTube channel after Writing Critic PASS. Confirm public (oEmbed 200) before publishing.",
+      "publishers": [
+        "Marketing",
+        "Admin"
+      ],
+      "subscribers": [
+        "Admin",
+        "Social Media",
+        "SEO Auditor",
+        "Sales"
+      ],
+      "must_act": [
+        "Social Media"
+      ],
+      "must_act_note": "Social Media repurposes for non-YouTube channels (when unlocked); SEO Auditor and Sales pull.",
+      "required_refs": [
+        "video_id",
+        "url",
+        "title",
+        "format"
+      ],
+      "state_file": "youtube",
+      "done_means": "Video is public (oEmbed 200); Critic packet key in refs.critic_key; ledger in yt-harvest updated. Social Media/SEO/Sales pull the url from the bus instead of asking Marketing."
     }
   },
-  "updated_at": "2026-10-20",
-  "updated_note": "2026-10-20 harness review: marketplace.pitch_submitted (BTG/EVONA/TrueBridge); critic.pass.outbound lane=marketplace->Investment, oawj_shop->Marketing. 2026-10-20 harness review: marketplace.pitch_submitted (BTG/EVONA/TrueBridge); critic.pass.outbound lane=marketplace->Investment, oawj_shop->Marketing. 2026-10-15: six new agents (Travel, Stills & Clips, Social Media, SEO Auditor, Subscription Cleaner, Expense Manager); topics travel.* (wildcard), assets.ready, social.post, seo.audit, subs.review, expense.logged, bus.test. 2026-10-08: pull-first bus. must_act (DM list) + must_act_rules per topic; subscribers stays the pull list. fte.submit DMs none; critic.pass lane=warm_note wakes Admin.",
+  "updated_at": "2026-10-23",
+  "updated_note": "2026-10-23 bus robustness (Jim): youtube.published topic; coverage block (silent thresholds, expected downstream events); critic.pass.outbound lanes oawj_youtube/adobe_stock/oawj_licensing/oawj_sales/investment routed to owners; sender text fixed to contact@. Earlier: 2026-10-20 harness review: marketplace.pitch_submitted (BTG/EVONA/TrueBridge); critic.pass.outbound lane=marketplace->Investment, oawj_shop->Marketing",
   "agents": {
     "Travel": "34ff498e-f62a-48ec-bda8-8b8ea4a62ae4",
     "Stills & Clips": "ca62e4bf-ae28-4748-a4b6-5c016f0a83cd",
@@ -713,5 +743,153 @@
     "Subscription Cleaner": "b5b207f9-7281-423f-a743-3aba78cb1176",
     "Expense Manager": "c8c41a30-3468-484b-8e16-ed184224e00d"
   },
-  "agents_note": "Subscriber registry for agents added 2026-10-15 (Jim-approved). Subscriptions live in each topic's subscribers list. Marketing has no WS-short/publish topic and Investment has no cash topic yet; Social Media/SEO Auditor pull critic.pass.outbound + adobe.batch_submitted, Expense Manager/Subscription Cleaner pull catalant.pitch_submitted as closest equivalents."
+  "agents_note": "Subscriber registry for agents added 2026-10-15 (Jim-approved). Subscriptions live in each topic's subscribers list. Marketing has no WS-short/publish topic and Investment has no cash topic yet; Social Media/SEO Auditor pull critic.pass.outbound + adobe.batch_submitted, Expense Manager/Subscription Cleaner pull catalant.pitch_submitted as closest equivalents.",
+  "coverage": {
+    "note": "Read by bin/busctl.py coverage and bin/bus_watchdog.py. silent_days = calendar days (business days when weekdays_only) a publisher may go without a real event before it is flagged. snooze_until (YYYY-MM-DD) mutes one agent. quiet_ok explains why silence is normally fine. Admin owns this block.",
+    "system_actors": [
+      "agent-bus-hook",
+      "day-ledger",
+      "Jim",
+      "Grok Bot"
+    ],
+    "actor_aliases": {
+      "fte-apply": "FTE Apply",
+      "investment": "Investment",
+      "marketing": "Marketing",
+      "sales": "Sales",
+      "ops": "Ops",
+      "admin": "Admin",
+      "critic": "Writing Critic"
+    },
+    "agents": {
+      "Admin": {
+        "silent_days": 1,
+        "quiet_ok": "Publishes critic/ge/chase/backfill events daily."
+      },
+      "Writing Critic": {
+        "silent_days": 3,
+        "quiet_ok": "Event-driven; quiet only when no outbound copy was submitted."
+      },
+      "FTE Apply": {
+        "silent_days": 2,
+        "weekdays_only": true,
+        "quiet_ok": "Weekdays plus two Saturdays; no events on Sundays."
+      },
+      "Sales": {
+        "silent_days": 4,
+        "quiet_ok": "Sends in Mon-Wed runs; quiet when no pitch is Critic-passed or the permit/quote work waits on Jim."
+      },
+      "Marketing": {
+        "silent_days": 4,
+        "quiet_ok": "Publishes Shorts/Adobe batches in waves; silence for 4+ days means a missed youtube.published or adobe.batch_submitted."
+      },
+      "Investment": {
+        "silent_days": 5,
+        "quiet_ok": "Catalant/BTG pitches are opportunity-driven; Mary-first cash focus can leave gaps on weekends."
+      },
+      "Social Media": {
+        "silent_days": 7,
+        "quiet_ok": "Instagram locked out; Facebook/other channels need Jim."
+      },
+      "SEO Auditor": {
+        "silent_days": 7,
+        "quiet_ok": "Audits on request; open questions to Jim are not events."
+      },
+      "Stills & Clips": {
+        "silent_days": 7,
+        "quiet_ok": "Works on Marketing/Sales requests; each handoff should still publish assets.ready."
+      },
+      "Expense Manager": {
+        "silent_days": 8,
+        "quiet_ok": "Monday receipt sweep; 'no new receipts' is a legitimate no-event week.",
+        "since": "2026-10-15"
+      },
+      "Travel": {
+        "silent_days": 14,
+        "since": "2026-10-15",
+        "quiet_ok": "Trip research only on request (Longmont trip 10/16)."
+      },
+      "Subscription Cleaner": {
+        "silent_days": 14,
+        "since": "2026-10-15",
+        "quiet_ok": "Review only on request; none scheduled."
+      },
+      "Ops": {
+        "exempt": true,
+        "quiet_ok": "Ops side effects (shop orders, Catalant email confirm, Adobe review) are published by Admin; Ops is not expected to publish."
+      }
+    },
+    "expected_downstream": [
+      {
+        "name": "youtube-publish",
+        "from_topic": "critic.pass.outbound",
+        "lanes": [
+          "youtube",
+          "oawj_youtube",
+          "shorts"
+        ],
+        "to_topics": [
+          "youtube.published"
+        ],
+        "owner": "Marketing",
+        "sla_hours": 72
+      },
+      {
+        "name": "licensing-send",
+        "from_topic": "critic.pass.outbound",
+        "lanes": [
+          "oawj_licensing",
+          "exclusive",
+          "print",
+          "extended"
+        ],
+        "to_topics": [
+          "shop.exclusive_sent"
+        ],
+        "owner": "Sales",
+        "sla_hours": 72
+      },
+      {
+        "name": "marketplace-pitch",
+        "from_topic": "critic.pass.outbound",
+        "lanes": [
+          "marketplace",
+          "catalant",
+          "btg",
+          "evona",
+          "truebridge"
+        ],
+        "to_topics": [
+          "catalant.pitch_submitted",
+          "marketplace.pitch_submitted"
+        ],
+        "owner": "Investment",
+        "sla_hours": 48
+      },
+      {
+        "name": "adobe-batch",
+        "from_topic": "critic.pass.outbound",
+        "lanes": [
+          "adobe_stock"
+        ],
+        "to_topics": [
+          "adobe.batch_submitted"
+        ],
+        "owner": "Marketing",
+        "sla_hours": 48
+      },
+      {
+        "name": "social-post",
+        "from_topic": "critic.pass.outbound",
+        "lanes": [
+          "social"
+        ],
+        "to_topics": [
+          "social.post"
+        ],
+        "owner": "Social Media",
+        "sla_hours": 72
+      }
+    ]
+  }
 }

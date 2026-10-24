@@ -19,6 +19,7 @@ from pathlib import Path
 # bin/ is not a package; chase.py sits beside this script.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import chase  # noqa: E402
+import buscov  # noqa: E402
 
 ROOT = chase.bus_root()
 CATALOG = ROOT / "catalog" / "topics.json"
@@ -112,6 +113,9 @@ def main() -> int:
 
     catalog = json.loads(CATALOG.read_text())
     topics = catalog["topics"]
+    # 2026-10-23: one spelling per agent so coverage/chase can count by actor
+    # (fte-apply vs FTE Apply, investment vs Investment split the log before).
+    args.actor = buscov.canonical_actor(args.actor, catalog)
     meta = resolve_topic(topics, args.topic)
     if meta is None:
         raise SystemExit(f"unknown topic {args.topic!r}. known: {', '.join(sorted(topics))}")

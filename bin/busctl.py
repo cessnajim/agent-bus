@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Inspect agent-bus: topics | state | today | tail | stall | owed"""
+"""Inspect agent-bus: topics | state | today | tail | stall | owed | coverage"""
 from __future__ import annotations
 import json, sys
 from pathlib import Path
@@ -43,6 +43,12 @@ def main():
         print(path.read_text())
         return 0
 
+    if args.cmd == "coverage":
+        import buscov
+        rep = buscov.build_report(ROOT, days=args.days, lookback=args.lookback)
+        print(json.dumps(rep, indent=2, ensure_ascii=False) if args.json else buscov.render_table(rep))
+        return 0
+
     if args.cmd in ("stall", "owed"):
         print(json.dumps(chase.build_stall_report(ROOT), indent=2, ensure_ascii=False))
         return 0
@@ -68,6 +74,8 @@ def argparse_parser():
     p_today = sp.add_parser("today"); p_today.add_argument("--topic")
     p_today.add_argument("--day", help="PT date YYYY-MM-DD (default: today in America/Los_Angeles)")
     p_tail = sp.add_parser("tail"); p_tail.add_argument("--topic"); p_tail.add_argument("--n", type=int, default=20)
+    p_cov = sp.add_parser("coverage", help="Per-publisher liveness: last event, counts, silent flag; Critic PASS with no downstream event")
+    p_cov.add_argument("--days", type=int, default=3); p_cov.add_argument("--lookback", type=int, default=7); p_cov.add_argument("--json", action="store_true")
     sp.add_parser("stall", help="Owed next steps: WS short, Critic PASS without submit/park, open parks")
     sp.add_parser("owed", help="Alias of stall")
     return ap
