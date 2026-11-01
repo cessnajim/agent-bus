@@ -1063,11 +1063,13 @@
       "description": "Public site change deployed and verified live (northidaholabs.com, atlas, news.latah, ems, OAWJ site copy)",
       "publishers": [
         "North Idaho Labs",
-        "Content Studio"
+        "Content Studio",
+        "OAWJ Shop"
       ],
       "subscribers": [
         "Admin",
-        "Content Studio"
+        "Content Studio",
+        "OAWJ Shop"
       ],
       "must_act": [],
       "required_refs": [
