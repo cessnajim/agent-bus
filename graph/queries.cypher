@@ -139,7 +139,8 @@ WITH a, max(e.epoch) AS last, count(e) AS events
 WITH a, events, last, CASE WHEN $days > 0 THEN $days ELSE coalesce(a.silent_days, 3) END AS allowed_days,
      CASE WHEN last IS NULL THEN null ELSE round((datetime().epochSeconds - last)/86400.0, 1) END AS days_silent
 RETURN a.name AS agent, events, days_silent, allowed_days,
-       (last IS NULL OR days_silent > allowed_days) AS flagged, left(coalesce(a.quiet_ok,''),50) AS quiet_ok
+       (last IS NULL OR days_silent > allowed_days) AND NOT coalesce(date(a.snooze_until) >= date(), false) AS flagged,
+       a.snooze_until AS snoozed_until, left(coalesce(a.quiet_ok,''),50) AS quiet_ok
 ORDER BY flagged DESC, days_silent DESC;
 
 // name: topic_coverage

@@ -189,8 +189,8 @@ def load(tx_run, rows, catalog, asks):
     cov = (catalog.get("coverage") or {}).get("agents", {})
     for name in set(ROSTER) | set(cov) | set((catalog.get("agents") or {})):
         a = cov.get(name, {})
-        run("MERGE (a:Agent {name:$n}) SET a.agent_id=$id, a.silent_days=$sd, a.quiet_ok=$q, a.weekdays_only=$w, a.system=false",
-            n=name, id=(catalog.get("agents") or {}).get(name) or KNOWN_IDS.get(name) or KNOWN_IDS.get(name), sd=a.get("silent_days"), q=a.get("quiet_ok"), w=a.get("weekdays_only"))
+        run("MERGE (a:Agent {name:$n}) SET a.agent_id=$id, a.silent_days=$sd, a.quiet_ok=$q, a.weekdays_only=$w, a.snooze_until=$sn, a.system=false",
+            n=name, id=(catalog.get("agents") or {}).get(name) or KNOWN_IDS.get(name), sd=a.get("silent_days"), q=a.get("quiet_ok"), w=a.get("weekdays_only"), sn=a.get("snooze_until"))
     for name in (catalog.get("coverage") or {}).get("system_actors", []):
         run("MERGE (a:Agent {name:$n}) SET a.system=true", n=name)
     run("MATCH (:Agent)-[r:SUBSCRIBES|CAN_PUBLISH]->(:Topic) DELETE r")
