@@ -1,0 +1,10 @@
+[Unit]
+Description=Refresh the agent graph from the bus every 15 minutes
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=15min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

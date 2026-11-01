@@ -1,0 +1,10 @@
+[Unit]
+Description=Load agent-bus events into the agent graph (Neo4j)
+Wants=agent-graph.service
+After=agent-graph.service
+
+[Service]
+Type=oneshot
+Environment=AGENT_BUS_ROOT=%h/Projects/agent-bus
+ExecStart=%h/.local/share/agent-graph/venv/bin/python %h/Projects/agent-bus/graph/load_bus.py --quiet
+Nice=10

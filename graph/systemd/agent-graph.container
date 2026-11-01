@@ -1,0 +1,29 @@
+# Agent graph: Neo4j 5 Community for Jim's agent bus (installed 2026-11-01)
+[Unit]
+Description=Agent graph (Neo4j 5 Community) fed from agent-bus
+After=network-online.target
+
+[Container]
+ContainerName=agent-graph
+Image=docker.io/library/neo4j:5-community
+PublishPort=127.0.0.1:7474:7474
+PublishPort=127.0.0.1:7687:7687
+Volume=%h/.local/share/agent-graph/data:/data:Z
+Volume=%h/.local/share/agent-graph/logs:/logs:Z
+EnvironmentFile=%h/.config/agent-graph/neo4j.env
+Environment=NEO4J_server_memory_heap_initial__size=512m
+Environment=NEO4J_server_memory_heap_max__size=1G
+Environment=NEO4J_server_memory_pagecache_size=512m
+Environment=NEO4J_server_default__listen__address=0.0.0.0
+Environment=NEO4J_dbms_usage__report_enabled=false
+UserNS=keep-id
+HealthCmd=bash -c 'exec 3<>/dev/tcp/127.0.0.1/7474'
+HealthInterval=60s
+HealthStartPeriod=60s
+
+[Service]
+Restart=always
+TimeoutStartSec=300
+
+[Install]
+WantedBy=default.target
