@@ -177,7 +177,7 @@
         "lane"
       ],
       "state_file": null,
-      "done_means": "Submit under standing apply-auth or Jim yes executed, or fte.park if blocked. Jim-held PASSes: prefer fte.park in the same turn (status=open, do_not_reprompt) so chase does not stall waiting for Jim. Chase proof is a later fte.submit or fte.park for the same company+source_id (or same packet_path); role-string mismatch alone must not stall. Master CV (company=master or source_id containing master) is not an application — excluded from chase stalls and submit-ready counts.",
+      "done_means": "Submit under standing apply-auth or Jim yes executed, or fte.park if blocked. Jim-held PASSes: prefer fte.park in the same turn (status=open, do_not_reprompt) so chase does not stall waiting for Jim. Chase proof is a later fte.submit or fte.park for the same company+source_id (or same packet_path); role-string mismatch alone must not stall. Master CV (company=master or source_id containing master) is not an application \u2014 excluded from chase stalls and submit-ready counts.",
       "chase": {
         "owner": "FTE Apply",
         "expect": [
@@ -816,7 +816,8 @@
       },
       "Stills & Clips": {
         "silent_days": 7,
-        "quiet_ok": "Works on Marketing/Sales requests; each handoff should still publish assets.ready."
+        "quiet_ok": "Works on Marketing/Sales requests; each handoff should still publish assets.ready.",
+        "snooze_until": "2026-11-10"
       },
       "Expense Manager": {
         "silent_days": 8,

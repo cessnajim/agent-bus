@@ -235,7 +235,7 @@ def main() -> int:
                     st = cur.setdefault("state", {})
                     if st.get("date") and st.get("date") != day:
                         cur["state"] = {"date": day, "submitted": 0,
-                                        "target": st.get("target", 6), "short": 0}
+                                        "target": 3, "short": 0}  # Jim 2026-10-30: 2-3 strong-fit/weekday (was 6)
                         cur["date"] = day
                         cur["submitted"] = 0
                 # topic / last_key / updated_at / last_actor = last event on this file.
