@@ -119,6 +119,8 @@ def agent_rows(catalog: dict, events: list[dict], now: datetime, days: int) -> l
         snooze = cfg.get("snooze_until")
         if cfg.get("exempt"):
             status = "EXEMPT"
+        elif cfg.get("on_request"):
+            status = "ON_REQUEST"  # v8: works only when asked; never flagged silent
         elif snooze and today <= snooze:
             status = "SNOOZED"
         elif age is None:

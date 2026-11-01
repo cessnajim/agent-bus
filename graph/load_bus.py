@@ -27,14 +27,27 @@ STATE_DIR = Path("~/.local/share/agent-graph").expanduser()
 
 JOB_TOPICS = {"fte.submit", "fte.reject", "fte.park", "fte.hold_cleared"}
 APP_STATUS = {"fte.submit": "submitted", "fte.reject": "rejected", "fte.park": "parked", "fte.hold_cleared": "hold_cleared"}
-ROSTER = ["Admin", "FTE Apply", "Writing Critic", "Unemployment", "Travel", "Expense Manager", "Investment",
-          "Social Media", "Marketing", "Sales", "Ops", "SEO Auditor", "Stills & Clips", "Subscription Cleaner", "Jim"]
-KNOWN_IDS = {"FTE Apply": "a8926586-fbf3-4d6c-8f0a-790e65ead1bd", "Admin": "fa50d9b1-127a-404a-81d2-7bf61b49e1fe",
+ROSTER = ["Admin", "Job Search", "Writing Critic", "Unemployment", "Travel & Personal", "Books", "Consulting",
+          "Social Media", "Content Studio", "OAWJ Shop", "Ops", "North Idaho Labs", "NatureNet", "Markets", "Jim"]
+KNOWN_IDS = {"Job Search": "a8926586-fbf3-4d6c-8f0a-790e65ead1bd", "Admin": "fa50d9b1-127a-404a-81d2-7bf61b49e1fe",
              "Writing Critic": "80f6148a-faf0-4d35-96b5-d9047389209a", "Unemployment": "b31aa760-294c-437c-82fe-9be43ebeff0c",
-             "Investment": "dd0ab463-c048-4751-87c7-68b6f041d6d9"}
-KNOWN_IDS = {"FTE Apply": "a8926586-fbf3-4d6c-8f0a-790e65ead1bd", "Admin": "fa50d9b1-127a-404a-81d2-7bf61b49e1fe",
-             "Writing Critic": "80f6148a-faf0-4d35-96b5-d9047389209a", "Unemployment": "b31aa760-294c-437c-82fe-9be43ebeff0c",
-             "Investment": "dd0ab463-c048-4751-87c7-68b6f041d6d9"}
+             "Consulting": "dd0ab463-c048-4751-87c7-68b6f041d6d9"}  # v8: catalog "agents" holds the full map
+
+
+def _akey(n):
+    return re.sub(r"[^a-z0-9]+", "", str(n).casefold())
+
+
+def canon_actor(aliases, name):
+    """v8 (2026-11-01): old agent names (FTE Apply, Investment, Sales...) resolve to the new roster,
+    case/punctuation-insensitive like bin/buscov.py."""
+    if not name:
+        return name
+    k = _akey(name)
+    for a, v in aliases.items():
+        if _akey(a) == k:
+            return v
+    return name
 
 
 def creds():
@@ -93,7 +106,7 @@ def read_events(aliases):
                 continue
             refs = e.get("refs") or {}
             ts = parse_ts(e.get("ts"))
-            actor = aliases.get(e.get("actor"), e.get("actor") or "unknown")
+            actor = canon_actor(aliases, e.get("actor")) or "unknown"
             topic = e.get("topic") or "unknown"
             rows.append({
                 "uid": h(topic, e.get("idempotency_key"), e.get("ts")),
@@ -189,8 +202,8 @@ def load(tx_run, rows, catalog, asks):
     cov = (catalog.get("coverage") or {}).get("agents", {})
     for name in set(ROSTER) | set(cov) | set((catalog.get("agents") or {})):
         a = cov.get(name, {})
-        run("MERGE (a:Agent {name:$n}) SET a.agent_id=$id, a.silent_days=$sd, a.quiet_ok=$q, a.weekdays_only=$w, a.snooze_until=$sn, a.system=false",
-            n=name, id=(catalog.get("agents") or {}).get(name) or KNOWN_IDS.get(name), sd=a.get("silent_days"), q=a.get("quiet_ok"), w=a.get("weekdays_only"), sn=a.get("snooze_until"))
+        run("MERGE (a:Agent {name:$n}) SET a.agent_id=$id, a.silent_days=$sd, a.quiet_ok=$q, a.weekdays_only=$w, a.snooze_until=$sn, a.exempt=$ex, a.on_request=$orq, a.system=false",
+            ex=bool(a.get("exempt")), orq=bool(a.get("on_request")), n=name, id=(catalog.get("agents") or {}).get(name) or KNOWN_IDS.get(name), sd=a.get("silent_days"), q=a.get("quiet_ok"), w=a.get("weekdays_only"), sn=a.get("snooze_until"))
     for name in (catalog.get("coverage") or {}).get("system_actors", []):
         run("MERGE (a:Agent {name:$n}) SET a.system=true", n=name)
     run("MATCH (:Agent)-[r:SUBSCRIBES|CAN_PUBLISH]->(:Topic) DELETE r")
@@ -306,7 +319,7 @@ def load(tx_run, rows, catalog, asks):
         for a in asks:
             # the queue has three row shapes: {agent, ask}, {from, q|question}, {asker, q}
             who = a.get("agent") or a.get("from") or a.get("asker")
-            who = aliases.get(who, who)
+            who = canon_actor(aliases, who)
             text = a.get("ask") or a.get("q") or a.get("question") or a.get("topic") or ""
             a = {**a, "agent": who, "ask": text, "urgent": bool(a.get("urgent")) or a.get("priority") == "urgent"}
             uid = a.get("id") or h(a.get("ts"), who, str(text)[:120])

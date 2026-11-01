@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "owner": "Admin",
   "rules": {
     "new_topic": "Admin only. Add when >=2 subscribers, recurring, and done_means is nameable. No mid-turn invention.",
@@ -17,16 +17,15 @@
     "fte.submit": {
       "description": "FTE application submitted with receipt",
       "publishers": [
-        "FTE Apply",
+        "Job Search",
         "Admin"
       ],
       "subscribers": [
         "Admin",
-        "Unemployment",
-        "Ops"
+        "Unemployment"
       ],
       "must_act": [],
-      "must_act_note": "GE sync is the publish hook; Unemployment pulls at cert/weekly WS; Admin pulls at ledger; Ops pulls.",
+      "must_act_note": "GE sync is the publish hook; Unemployment pulls at cert/weekly WS; Admin pulls at ledger.",
       "required_refs": [
         "company",
         "role",
@@ -40,19 +39,17 @@
       "description": "FTE application rejected or lost",
       "publishers": [
         "Admin",
-        "Ops",
-        "FTE Apply"
+        "Job Search"
       ],
       "subscribers": [
         "Admin",
         "Unemployment",
-        "Ops",
         "Writing Critic"
       ],
       "must_act": [
-        "Admin"
+        "Job Search"
       ],
-      "must_act_note": "Admin runs the reject loop; others pull.",
+      "must_act_note": "Job Search runs the reject learning loop (moved from Admin 2026-11-01); others pull.",
       "required_refs": [
         "company",
         "role",
@@ -67,11 +64,11 @@
         "Admin"
       ],
       "subscribers": [
-        "FTE Apply",
+        "Job Search",
         "Admin"
       ],
       "must_act": [
-        "FTE Apply"
+        "Job Search"
       ],
       "required_refs": [
         "company",
@@ -84,11 +81,11 @@
     "fte.park": {
       "description": "FTE packet parked (Lever verify-fail, captcha, Jim Create-Account fill, soft-skip). Republish to clear.",
       "publishers": [
-        "FTE Apply",
+        "Job Search",
         "Admin"
       ],
       "subscribers": [
-        "FTE Apply",
+        "Job Search",
         "Admin"
       ],
       "must_act": [],
@@ -139,11 +136,11 @@
         "Admin"
       ],
       "subscribers": [
-        "FTE Apply",
+        "Job Search",
         "Admin"
       ],
       "must_act": [
-        "FTE Apply"
+        "Job Search"
       ],
       "must_act_rules": [
         {
@@ -151,7 +148,7 @@
             "lane": "catalant"
           },
           "must_act": [
-            "Investment"
+            "Consulting"
           ]
         },
         {
@@ -177,9 +174,9 @@
         "lane"
       ],
       "state_file": null,
-      "done_means": "Submit under standing apply-auth or Jim yes executed, or fte.park if blocked. Jim-held PASSes: prefer fte.park in the same turn (status=open, do_not_reprompt) so chase does not stall waiting for Jim. Chase proof is a later fte.submit or fte.park for the same company+source_id (or same packet_path); role-string mismatch alone must not stall. Master CV (company=master or source_id containing master) is not an application \u2014 excluded from chase stalls and submit-ready counts.",
+      "done_means": "Submit under standing apply-auth or Jim yes executed, or fte.park if blocked. Jim-held PASSes: prefer fte.park in the same turn (status=open, do_not_reprompt) so chase does not stall waiting for Jim. Chase proof is a later fte.submit or fte.park for the same company+source_id (or same packet_path); role-string mismatch alone must not stall. Master CV (company=master or source_id containing master) is not an application — excluded from chase stalls and submit-ready counts.",
       "chase": {
-        "owner": "FTE Apply",
+        "owner": "Job Search",
         "expect": [
           "fte.submit",
           "fte.park"
@@ -204,11 +201,12 @@
       ],
       "subscribers": [
         "Admin",
-        "Sales",
-        "Marketing",
+        "OAWJ Shop",
+        "Content Studio",
         "Social Media",
-        "SEO Auditor",
-        "Investment"
+        "Consulting",
+        "North Idaho Labs",
+        "NatureNet"
       ],
       "must_act": [
         "Admin"
@@ -229,7 +227,7 @@
             ]
           },
           "must_act": [
-            "Marketing"
+            "Content Studio"
           ]
         },
         {
@@ -246,7 +244,7 @@
             ]
           },
           "must_act": [
-            "Sales"
+            "OAWJ Shop"
           ]
         },
         {
@@ -261,7 +259,7 @@
             ]
           },
           "must_act": [
-            "Investment"
+            "Consulting"
           ]
         }
       ],
@@ -277,15 +275,15 @@
     "catalant.email_confirmed": {
       "description": "Catalant preferred-email confirm clicked",
       "publishers": [
-        "Ops",
+        "Consulting",
         "Admin"
       ],
       "subscribers": [
-        "Investment",
+        "Consulting",
         "Admin"
       ],
       "must_act": [
-        "Investment"
+        "Consulting"
       ],
       "required_refs": [
         "email"
@@ -296,17 +294,16 @@
     "catalant.pitch_submitted": {
       "description": "Catalant pitch submitted under send-auth",
       "publishers": [
-        "Investment",
+        "Consulting",
         "Admin"
       ],
       "subscribers": [
         "Admin",
-        "Investment",
-        "Expense Manager",
-        "Subscription Cleaner"
+        "Consulting",
+        "Books"
       ],
       "must_act": [
-        "Investment"
+        "Consulting"
       ],
       "must_act_note": "Actor is dropped from the DM list, so Investment self-publishes DM no one; Admin pulls at ledger.",
       "required_refs": [
@@ -320,14 +317,15 @@
       "description": "Work Seeking count below daily target",
       "publishers": [
         "Admin",
-        "day-ledger"
+        "day-ledger",
+        "Job Search"
       ],
       "subscribers": [
-        "FTE Apply",
+        "Job Search",
         "Admin"
       ],
       "must_act": [
-        "FTE Apply"
+        "Job Search"
       ],
       "must_act_note": "Unchanged weekday nudge (Jim SoT lock).",
       "required_refs": [
@@ -338,7 +336,7 @@
       "state_file": "ws",
       "done_means": "FTE Apply is harvesting, or an honest empty inventory is recorded (refs.inventory=empty on this topic). submitted is the absolute day count. One publisher for short: Admin or day-ledger only (FTE Apply uses busctl stall; may publish inventory=empty once to clear). Duplicate short with unchanged submitted/target inside follow_through.debounce_minutes is hard-blocked (publish status=debounced) unless this is the first inventory=empty after a non-empty short. Chase proof is a later fte.submit or inventory=empty, not a chat ack.",
       "chase": {
-        "owner": "FTE Apply",
+        "owner": "Job Search",
         "expect": [
           "fte.submit"
         ],
@@ -368,16 +366,13 @@
     "adobe.batch_submitted": {
       "description": "Immich/DAM batch uploaded to Adobe Stock Contributor and is In review (non-exclusive RF; heroes off Stock)",
       "publishers": [
-        "Marketing",
+        "Content Studio",
         "Admin"
       ],
       "subscribers": [
         "Admin",
-        "Marketing",
-        "Ops",
-        "Social Media",
-        "SEO Auditor",
-        "Stills & Clips"
+        "Content Studio",
+        "Social Media"
       ],
       "must_act": [],
       "required_refs": [
@@ -391,12 +386,12 @@
     "adobe.review_logged": {
       "description": "Adobe Stock review email (or Contributor scrape) logged to the fail-log with counts",
       "publishers": [
-        "Admin",
-        "Ops"
+        "Content Studio",
+        "Admin"
       ],
       "subscribers": [
         "Admin",
-        "Marketing"
+        "Content Studio"
       ],
       "must_act": [],
       "must_act_note": "state adobe reasons_pending flags reason gaps; Admin pulls.",
@@ -413,14 +408,14 @@
       "description": "Verbatim Contributor reject reasons scraped; harvest gates updated",
       "publishers": [
         "Admin",
-        "Marketing"
+        "Content Studio"
       ],
       "subscribers": [
         "Admin",
-        "Marketing"
+        "Content Studio"
       ],
       "must_act": [
-        "Marketing"
+        "Content Studio"
       ],
       "must_act_note": "Marketing gates the next DAM upload.",
       "required_refs": [
@@ -434,17 +429,17 @@
     "shop.order_received": {
       "description": "outandaboutwithjim.com / Stripe shop order received",
       "publishers": [
-        "Ops",
+        "OAWJ Shop",
         "Admin"
       ],
       "subscribers": [
         "Admin",
-        "Sales",
-        "Marketing",
-        "Expense Manager"
+        "OAWJ Shop",
+        "Content Studio",
+        "Books"
       ],
       "must_act": [
-        "Sales"
+        "OAWJ Shop"
       ],
       "required_refs": [
         "order_id",
@@ -457,15 +452,15 @@
     "shop.exclusive_draft_ready": {
       "description": "Sales exclusive/print/extended outreach draft ready (Critic lane); standing send-auth after Critic PASS",
       "publishers": [
-        "Sales",
+        "OAWJ Shop",
         "Admin"
       ],
       "subscribers": [
         "Admin",
-        "Sales"
+        "OAWJ Shop"
       ],
       "must_act": [
-        "Sales"
+        "OAWJ Shop"
       ],
       "must_act_note": "Sales sends under standing auth after Critic PASS.",
       "required_refs": [
@@ -479,13 +474,13 @@
     "shop.exclusive_sent": {
       "description": "exclusive/print/extended/licensing outreach SENT (From contact@northidaholabs.com for the licensing run; Jim's own replies From jim@)",
       "publishers": [
-        "Sales",
+        "OAWJ Shop",
         "Admin"
       ],
       "subscribers": [
         "Admin",
-        "Sales",
-        "Marketing"
+        "OAWJ Shop",
+        "Content Studio"
       ],
       "must_act": [],
       "required_refs": [
@@ -505,11 +500,11 @@
       ],
       "subscribers": [
         "Admin",
-        "FTE Apply"
+        "Job Search"
       ],
       "must_act": [
         "refs.owner",
-        "FTE Apply"
+        "Job Search"
       ],
       "must_act_note": "Unchanged chase (Jim SoT lock): stall owner plus FTE Apply; refs.<key> resolves from the event.",
       "required_refs": [
@@ -524,13 +519,13 @@
     "travel.*": {
       "description": "Travel lane events: publish a concrete travel.<kind> (travel.plan, travel.route, travel.charging, travel.hotel, travel.booked). Wildcard entry: publish.py matches travel.<anything>.",
       "publishers": [
-        "Travel",
+        "Travel & Personal",
         "Admin"
       ],
       "subscribers": [
         "Admin",
-        "Travel",
-        "Expense Manager"
+        "Travel & Personal",
+        "Books"
       ],
       "must_act": [],
       "required_refs": [
@@ -542,17 +537,17 @@
     "assets.ready": {
       "description": "Stills & Clips prepped DAM stills/clips (ArtCraft CLIs) ready for hand-off; Stills & Clips does not publish",
       "publishers": [
-        "Stills & Clips",
+        "Content Studio",
         "Admin"
       ],
       "subscribers": [
-        "Marketing",
+        "Content Studio",
         "Adobe Stock",
         "Social Media",
         "Admin"
       ],
       "must_act": [
-        "Marketing"
+        "Content Studio"
       ],
       "required_refs": [
         "batch_id",
@@ -568,7 +563,7 @@
             "for": "adobe"
           },
           "must_act": [
-            "Marketing"
+            "Content Studio"
           ]
         }
       ],
@@ -582,8 +577,7 @@
       ],
       "subscribers": [
         "Admin",
-        "Marketing",
-        "SEO Auditor"
+        "Content Studio"
       ],
       "must_act": [],
       "required_refs": [
@@ -598,14 +592,16 @@
     "seo.audit": {
       "description": "SEO Auditor findability finding (search / AI-answer) with owning agent to implement",
       "publishers": [
-        "SEO Auditor",
+        "Content Studio",
         "Admin"
       ],
       "subscribers": [
         "Admin",
-        "Marketing",
+        "Content Studio",
         "Social Media",
-        "Sales"
+        "OAWJ Shop",
+        "North Idaho Labs",
+        "NatureNet"
       ],
       "must_act": [
         "refs.owner"
@@ -622,12 +618,12 @@
     "subs.review": {
       "description": "Subscription Cleaner proposal on a personal recurring charge (propose only)",
       "publishers": [
-        "Subscription Cleaner",
+        "Books",
         "Admin"
       ],
       "subscribers": [
         "Admin",
-        "Expense Manager"
+        "Books"
       ],
       "must_act": [],
       "required_refs": [
@@ -642,12 +638,12 @@
     "expense.logged": {
       "description": "Expense Manager logged a business receipt to an entity ledger",
       "publishers": [
-        "Expense Manager",
+        "Books",
         "Admin"
       ],
       "subscribers": [
         "Admin",
-        "Investment"
+        "Consulting"
       ],
       "must_act": [],
       "required_refs": [
@@ -664,12 +660,10 @@
       "publishers": [
         "Admin",
         "Grok Bot",
-        "Travel",
-        "Stills & Clips",
+        "Travel & Personal",
+        "Content Studio",
         "Social Media",
-        "SEO Auditor",
-        "Subscription Cleaner",
-        "Expense Manager"
+        "Books"
       ],
       "subscribers": [
         "Admin",
@@ -686,14 +680,13 @@
     "marketplace.pitch_submitted": {
       "description": "Non-Catalant marketplace application/pitch submitted under standing send-auth after Critic PASS (BTG, EVONA, TrueBridge; Catalant keeps catalant.pitch_submitted). Added 2026-10-20 harness review.",
       "publishers": [
-        "Investment",
+        "Consulting",
         "Admin"
       ],
       "subscribers": [
         "Admin",
-        "Investment",
-        "Expense Manager",
-        "Subscription Cleaner"
+        "Consulting",
+        "Books"
       ],
       "must_act": [],
       "must_act_note": "Pull-only. Admin reads at day ledger / weekly revenue tally.",
@@ -710,14 +703,14 @@
     "youtube.published": {
       "description": "A video or Short went PUBLIC on an Out and About with Jim (OAWJ) YouTube channel after Writing Critic PASS. Confirm public (oEmbed 200) before publishing.",
       "publishers": [
-        "Marketing",
+        "Content Studio",
         "Admin"
       ],
       "subscribers": [
         "Admin",
         "Social Media",
-        "SEO Auditor",
-        "Sales"
+        "Content Studio",
+        "OAWJ Shop"
       ],
       "must_act": [
         "Social Media"
@@ -740,8 +733,9 @@
       ],
       "subscribers": [
         "Admin",
-        "Investment",
-        "Grok Bot"
+        "Consulting",
+        "Grok Bot",
+        "Books"
       ],
       "must_act": [],
       "required_refs": [
@@ -750,21 +744,363 @@
       ],
       "state_file": "ui",
       "done_means": "Cert for the week is filed on Idaho Dept of Labor and the confirmation number is on the bus; chat claims without it are not proof. Silence >8 days = missed cert (coverage watchdog)."
+    },
+    "fte.response": {
+      "description": "Employer outcome on a submitted FTE role other than a reject: recruiter reply, screen, interview, assessment, offer",
+      "publishers": [
+        "Job Search",
+        "Admin"
+      ],
+      "subscribers": [
+        "Admin",
+        "Writing Critic",
+        "Unemployment",
+        "Grok Bot"
+      ],
+      "must_act": [
+        "Grok Bot"
+      ],
+      "must_act_note": "Larry (Grok Bot) gets Jim's time on the calendar; others pull.",
+      "required_refs": [
+        "company",
+        "role",
+        "source_id",
+        "kind"
+      ],
+      "done_means": "GE stage updated; Larry has the screen/interview on Jim's card; the graph links the outcome to its Application.",
+      "state_file": null
+    },
+    "fte.harvest": {
+      "description": "Harvest sweep finished (sources, found, kept after filter rules)",
+      "publishers": [
+        "Job Search"
+      ],
+      "subscribers": [
+        "Admin"
+      ],
+      "must_act": [],
+      "required_refs": [
+        "sweep",
+        "found",
+        "kept",
+        "path"
+      ],
+      "done_means": "Harvest file at refs.path; kept count feeds the conversion queries.",
+      "state_file": null
+    },
+    "fte.filter_change": {
+      "description": "FTE job filter rule added, changed or removed",
+      "publishers": [
+        "Job Search",
+        "Admin"
+      ],
+      "subscribers": [
+        "Admin",
+        "Writing Critic"
+      ],
+      "must_act": [],
+      "required_refs": [
+        "rule",
+        "change",
+        "reason",
+        "jim_ok"
+      ],
+      "done_means": "fte-job-filter-rules skill text matches the change; Jim's yes cited when the rule is Jim-locked; evidence graph query in note.",
+      "state_file": null
+    },
+    "critic.revise": {
+      "description": "Writing Critic REVISE or FAIL verdict with fail tags",
+      "publishers": [
+        "Writing Critic"
+      ],
+      "subscribers": [
+        "Admin",
+        "Job Search",
+        "Consulting",
+        "OAWJ Shop",
+        "Content Studio",
+        "Social Media"
+      ],
+      "must_act": [
+        "refs.owner"
+      ],
+      "must_act_note": "Wakes only the drafting owner.",
+      "required_refs": [
+        "lane",
+        "packet_path",
+        "fail_tags",
+        "owner"
+      ],
+      "done_means": "Owner revised and resubmitted (later critic.pass) or dropped with a note; fail_tags feed the Friday learning review.",
+      "state_file": null
+    },
+    "income.earned": {
+      "description": "Money earned or invoiced (gross, in the week worked), not yet paid",
+      "publishers": [
+        "Consulting",
+        "OAWJ Shop",
+        "Books",
+        "Admin"
+      ],
+      "subscribers": [
+        "Books",
+        "Unemployment",
+        "Admin",
+        "Grok Bot"
+      ],
+      "must_act": [
+        "Books"
+      ],
+      "required_refs": [
+        "entity",
+        "source",
+        "amount_gross",
+        "work_date",
+        "status"
+      ],
+      "done_means": "Books ledger row written (revenue_2026.csv); Unemployment counts the gross in the week worked.",
+      "state_file": null
+    },
+    "income.paid": {
+      "description": "Earned income actually received",
+      "publishers": [
+        "Books",
+        "Admin"
+      ],
+      "subscribers": [
+        "Consulting",
+        "OAWJ Shop",
+        "Unemployment",
+        "Admin"
+      ],
+      "must_act": [],
+      "required_refs": [
+        "entity",
+        "source",
+        "amount",
+        "paid_date",
+        "earned_key"
+      ],
+      "done_means": "Ledger row marked paid and matched to its income.earned key.",
+      "state_file": null
+    },
+    "jim.ask": {
+      "description": "A question or approval waiting on Jim (mirrors /workspace/jim-asks/queue.jsonl)",
+      "publishers": [
+        "Grok Bot",
+        "Admin",
+        "Job Search",
+        "Writing Critic",
+        "Unemployment",
+        "Consulting",
+        "Books",
+        "Content Studio",
+        "Social Media",
+        "OAWJ Shop",
+        "Travel & Personal",
+        "North Idaho Labs",
+        "NatureNet"
+      ],
+      "subscribers": [
+        "Grok Bot",
+        "Admin"
+      ],
+      "must_act": [
+        "Grok Bot"
+      ],
+      "required_refs": [
+        "ask_id",
+        "owner",
+        "deadline"
+      ],
+      "done_means": "Row in the asks queue and shown in the next 8 AM / 4 PM batch (urgent: now).",
+      "state_file": null
+    },
+    "jim.answer": {
+      "description": "Jim answered an ask (approve / hold / change / no)",
+      "publishers": [
+        "Grok Bot",
+        "Admin"
+      ],
+      "subscribers": [
+        "Admin"
+      ],
+      "must_act": [
+        "refs.owner"
+      ],
+      "required_refs": [
+        "ask_id",
+        "owner",
+        "answer"
+      ],
+      "done_means": "Owner acted on the answer (next lane event) or published learning.applied.",
+      "state_file": null
+    },
+    "learning.proposal": {
+      "description": "Evidence-backed change proposal from the Friday learning review",
+      "publishers": [
+        "Admin"
+      ],
+      "subscribers": [
+        "Grok Bot"
+      ],
+      "must_act": [
+        "Grok Bot"
+      ],
+      "required_refs": [
+        "proposal_id",
+        "target",
+        "evidence_query"
+      ],
+      "done_means": "In Jim's 4 PM asks batch; nothing edited until Jim says yes.",
+      "state_file": null
+    },
+    "learning.applied": {
+      "description": "A profile, skill, routine, filter or catalog change went live",
+      "publishers": [
+        "Grok Bot",
+        "Admin",
+        "Job Search",
+        "Writing Critic",
+        "Unemployment",
+        "Consulting",
+        "Books",
+        "Content Studio",
+        "Social Media",
+        "OAWJ Shop",
+        "Travel & Personal",
+        "North Idaho Labs",
+        "NatureNet"
+      ],
+      "subscribers": [
+        "Admin",
+        "Grok Bot"
+      ],
+      "must_act": [],
+      "required_refs": [
+        "change_id",
+        "target",
+        "jim_ok"
+      ],
+      "done_means": "Change is live and cites Jim's approval; the graph links it to the proposal or ask.",
+      "state_file": null
+    },
+    "shop.reply": {
+      "description": "Named-buyer or shop inbox reply (licensing, print, extended)",
+      "publishers": [
+        "OAWJ Shop"
+      ],
+      "subscribers": [
+        "Admin",
+        "Books"
+      ],
+      "must_act": [],
+      "required_refs": [
+        "prospect",
+        "thread",
+        "kind"
+      ],
+      "done_means": "Reply logged against the prospect; quote or follow-up drafted for Critic if needed.",
+      "state_file": null
+    },
+    "marketplace.outcome": {
+      "description": "Marketplace or expert-network outcome (shortlisted, won, lost, call booked, call done)",
+      "publishers": [
+        "Consulting"
+      ],
+      "subscribers": [
+        "Admin",
+        "Books"
+      ],
+      "must_act": [],
+      "required_refs": [
+        "platform",
+        "project",
+        "outcome"
+      ],
+      "done_means": "Outcome logged; a done paid call also publishes income.earned.",
+      "state_file": null
+    },
+    "social.metrics": {
+      "description": "Weekly social metrics snapshot per channel",
+      "publishers": [
+        "Social Media"
+      ],
+      "subscribers": [
+        "Admin",
+        "Content Studio"
+      ],
+      "must_act": [],
+      "required_refs": [
+        "week",
+        "channel"
+      ],
+      "done_means": "Numbers cited from the platform; feeds the content queries.",
+      "state_file": null
+    },
+    "grant.submitted": {
+      "description": "Grant, pitch or registration Jim submitted (NSF, SBIR, SAM, etc.)",
+      "publishers": [
+        "NatureNet",
+        "North Idaho Labs"
+      ],
+      "subscribers": [
+        "Admin",
+        "Books",
+        "Writing Critic"
+      ],
+      "must_act": [],
+      "required_refs": [
+        "entity",
+        "program",
+        "submitted_by",
+        "confirmation"
+      ],
+      "done_means": "Jim submitted it himself; confirmation path or id in refs.",
+      "state_file": null
+    },
+    "site.deployed": {
+      "description": "Public site change deployed and verified live (northidaholabs.com, atlas, news.latah, ems, OAWJ site copy)",
+      "publishers": [
+        "North Idaho Labs",
+        "Content Studio"
+      ],
+      "subscribers": [
+        "Admin",
+        "Content Studio"
+      ],
+      "must_act": [],
+      "required_refs": [
+        "site",
+        "pr",
+        "live_url"
+      ],
+      "done_means": "Merged PR deployed and live URL checked.",
+      "state_file": null
     }
   },
-  "updated_at": "2026-10-23",
-  "updated_note": "2026-10-23 bus robustness (Jim): youtube.published + ui.cert_filed topics; coverage block (silent thresholds, expected downstream events); critic.pass.outbound lanes oawj_youtube/adobe_stock/oawj_licensing/oawj_sales/investment routed to owners; sender text fixed to contact@. Earlier: 2026-10-20 harness review: marketplace.pitch_submitted (BTG/EVONA/TrueBridge); critic.pass.outbound lane=marketplace->Investment, oawj_shop->Marketing",
+  "updated_at": "2026-11-01",
+  "updated_note": "2026-11-01 roster v8 (Jim: 'i approve all 8 suggestions'): agent renames/merges with alias map so history resolves; new topics fte.response, fte.harvest, fte.filter_change, critic.revise, income.earned/paid, jim.ask/answer, learning.proposal/applied, shop.reply, marketplace.outcome, social.metrics, grant.submitted, site.deployed; NIL + NatureNet added; Markets/private agents exempt; on-request agents never flagged silent; Ops lanes moved, Ops exempt until retirement. Earlier: 2026-10-23 bus robustness (Jim): youtube.published + ui.cert_filed topics; coverage block (silent thresholds, expected downstream events); critic.pass.outbound lanes oawj_youtube/adobe_stock/oawj_licensing/oawj_sales/investment routed to owners; sender text fixed to contact@. Earlier: 2026-10-20 harness review: marketplace.pitch_submitted (BTG/EVONA/TrueBridge); critic.pass.outbound lane=marketplace->Investment, oawj_shop->Marketing",
   "agents": {
-    "Travel": "34ff498e-f62a-48ec-bda8-8b8ea4a62ae4",
-    "Stills & Clips": "ca62e4bf-ae28-4748-a4b6-5c016f0a83cd",
+    "Admin": "fa50d9b1-127a-404a-81d2-7bf61b49e1fe",
+    "Job Search": "a8926586-fbf3-4d6c-8f0a-790e65ead1bd",
+    "Writing Critic": "80f6148a-faf0-4d35-96b5-d9047389209a",
+    "Unemployment": "b31aa760-294c-437c-82fe-9be43ebeff0c",
+    "Consulting": "dd0ab463-c048-4751-87c7-68b6f041d6d9",
+    "Markets": "bc706fe2-1f93-40f5-83a5-81659f154d1d",
+    "North Idaho Labs": "cd904b26-f530-418d-bffc-39c46a0451e5",
+    "NatureNet": "cea6bba3-83ef-460d-98b4-b81f565c2026",
+    "Books": "c8c41a30-3468-484b-8e16-ed184224e00d",
+    "Content Studio": "5d55b9e2-f9a6-45b0-8371-5254e17eb025",
     "Social Media": "0b44ceee-7329-4bd0-9c7f-2288abdd0782",
-    "SEO Auditor": "624476b9-0878-48cd-ae81-00a0d6e08e00",
-    "Subscription Cleaner": "b5b207f9-7281-423f-a743-3aba78cb1176",
-    "Expense Manager": "c8c41a30-3468-484b-8e16-ed184224e00d"
+    "OAWJ Shop": "9c5fcb12-9a8e-42f3-b619-c7ccb804e3fd",
+    "Ops": "bc44de8b-c063-4a99-96b3-a3dbc64ef963",
+    "Travel & Personal": "34ff498e-f62a-48ec-bda8-8b8ea4a62ae4",
+    "Grok Bot": "bedb13fb-aecb-4e5a-840d-523a921d977a"
   },
-  "agents_note": "Subscriber registry for agents added 2026-10-15 (Jim-approved). Subscriptions live in each topic's subscribers list. Marketing has no WS-short/publish topic and Investment has no cash topic yet; Social Media/SEO Auditor pull critic.pass.outbound + adobe.batch_submitted, Expense Manager/Subscription Cleaner pull catalant.pitch_submitted as closest equivalents.",
+  "agents_note": "Roster v8 (Jim 2026-11-01 'i approve all 8 suggestions'): canonical agent name -> agent id. Old names resolve through coverage.actor_aliases; see agent_renames for history.",
   "coverage": {
-    "note": "Read by bin/busctl.py coverage and bin/bus_watchdog.py. silent_days = calendar days (business days when weekdays_only) a publisher may go without a real event before it is flagged. snooze_until (YYYY-MM-DD) mutes one agent. quiet_ok explains why silence is normally fine. Admin owns this block.",
+    "note": "Read by bin/busctl.py coverage and bin/bus_watchdog.py. silent_days = calendar days (business days when weekdays_only) a publisher may go without a real event before it is flagged. snooze_until (YYYY-MM-DD) mutes one agent. on_request=true: works only when asked, never flagged SILENT/NEVER. exempt=true: off the bus by design. quiet_ok explains why silence is normally fine. Admin owns this block.",
     "system_actors": [
       "agent-bus-hook",
       "day-ledger",
@@ -772,13 +1108,27 @@
       "Grok Bot"
     ],
     "actor_aliases": {
-      "fte-apply": "FTE Apply",
-      "investment": "Investment",
-      "marketing": "Marketing",
-      "sales": "Sales",
+      "fte-apply": "Job Search",
+      "investment": "Consulting",
+      "marketing": "Content Studio",
+      "sales": "OAWJ Shop",
       "ops": "Ops",
       "admin": "Admin",
-      "critic": "Writing Critic"
+      "critic": "Writing Critic",
+      "FTE Apply": "Job Search",
+      "Investment": "Consulting",
+      "Marketing": "Content Studio",
+      "Stills & Clips": "Content Studio",
+      "SEO Auditor": "Content Studio",
+      "Sales": "OAWJ Shop",
+      "Expense Manager": "Books",
+      "Subscription Cleaner": "Books",
+      "Disk Saver": "Admin",
+      "Travel": "Travel & Personal",
+      "fte apply": "Job Search",
+      "larry": "Grok Bot",
+      "systems": "Admin",
+      "nil": "North Idaho Labs"
     },
     "agents": {
       "Admin": {
@@ -789,59 +1139,71 @@
         "silent_days": 3,
         "quiet_ok": "Event-driven; quiet only when no outbound copy was submitted."
       },
-      "FTE Apply": {
+      "Job Search": {
         "silent_days": 2,
         "weekdays_only": true,
         "quiet_ok": "Weekdays plus two Saturdays; no events on Sundays."
       },
-      "Sales": {
+      "OAWJ Shop": {
         "silent_days": 4,
         "quiet_ok": "Sends in Mon-Wed runs; quiet when no pitch is Critic-passed or the permit/quote work waits on Jim."
       },
-      "Marketing": {
+      "Content Studio": {
         "silent_days": 4,
-        "quiet_ok": "Publishes Shorts/Adobe batches in waves; silence for 4+ days means a missed youtube.published or adobe.batch_submitted."
+        "quiet_ok": "Shorts/Adobe batches, stills/clips prep and SEO audits come in waves; LCC paused until the kickoff video is public."
       },
-      "Investment": {
+      "Consulting": {
         "silent_days": 5,
-        "quiet_ok": "Catalant/BTG pitches are opportunity-driven; Mary-first cash focus can leave gaps on weekends."
+        "quiet_ok": "Catalant (Mondays), TrueBridge/BTG/EVONA and expert-network calls are opportunity-driven."
       },
       "Social Media": {
         "silent_days": 7,
         "quiet_ok": "Instagram locked out; Facebook/other channels need Jim."
       },
-      "SEO Auditor": {
-        "silent_days": 7,
-        "quiet_ok": "Audits on request; open questions to Jim are not events."
-      },
-      "Stills & Clips": {
-        "silent_days": 7,
-        "quiet_ok": "Works on Marketing/Sales requests; each handoff should still publish assets.ready.",
-        "snooze_until": "2026-11-10"
-      },
-      "Expense Manager": {
+      "Books": {
         "silent_days": 8,
-        "quiet_ok": "Monday receipt sweep; 'no new receipts' is a legitimate no-event week.",
+        "quiet_ok": "Monday receipt sweep; income rows when money is earned/paid; subscription review on request.",
         "since": "2026-10-15"
       },
-      "Travel": {
+      "Travel & Personal": {
         "silent_days": 14,
+        "on_request": true,
         "since": "2026-10-15",
-        "quiet_ok": "Trip research only on request (Longmont trip 10/16)."
-      },
-      "Subscription Cleaner": {
-        "silent_days": 14,
-        "since": "2026-10-15",
-        "quiet_ok": "Review only on request; none scheduled."
-      },
-      "Ops": {
-        "exempt": true,
-        "quiet_ok": "Ops side effects (shop orders, Catalant email confirm, Adobe review) are published by Admin; Ops is not expected to publish."
+        "quiet_ok": "Trip and personal chores on request; garden check is not a bus event."
       },
       "Unemployment": {
         "silent_days": 8,
         "quiet_ok": "One weekly cert (Sunday); no other events expected.",
         "since": "2026-10-18"
+      },
+      "North Idaho Labs": {
+        "silent_days": 14,
+        "on_request": true,
+        "since": "2026-11-01",
+        "quiet_ok": "Publishes site.deployed / grant.submitted when they happen; added to the bus 2026-11-01."
+      },
+      "NatureNet": {
+        "silent_days": 14,
+        "on_request": true,
+        "since": "2026-11-01",
+        "quiet_ok": "Publishes grant.submitted when Jim files; added to the bus 2026-11-01."
+      },
+      "Ops": {
+        "exempt": true,
+        "retire_after": "2026-11-08",
+        "quiet_ok": "Lanes moved 2026-11-01 (job mail -> Job Search, verify clicks -> Consulting, shop/Stripe/deploy -> OAWJ Shop). Retire after one clean week."
+      },
+      "Markets": {
+        "exempt": true,
+        "quiet_ok": "Research only; no side effects (Jim-approved off-bus)."
+      },
+      "moms health": {
+        "exempt": true,
+        "quiet_ok": "Private; off the bus."
+      },
+      "ex wife watch": {
+        "exempt": true,
+        "quiet_ok": "Private; off the bus."
       }
     },
     "expected_downstream": [
@@ -856,7 +1218,7 @@
         "to_topics": [
           "youtube.published"
         ],
-        "owner": "Marketing",
+        "owner": "Content Studio",
         "sla_hours": 72
       },
       {
@@ -871,7 +1233,7 @@
         "to_topics": [
           "shop.exclusive_sent"
         ],
-        "owner": "Sales",
+        "owner": "OAWJ Shop",
         "sla_hours": 72
       },
       {
@@ -888,7 +1250,7 @@
           "catalant.pitch_submitted",
           "marketplace.pitch_submitted"
         ],
-        "owner": "Investment",
+        "owner": "Consulting",
         "sla_hours": 48
       },
       {
@@ -900,7 +1262,7 @@
         "to_topics": [
           "adobe.batch_submitted"
         ],
-        "owner": "Marketing",
+        "owner": "Content Studio",
         "sla_hours": 48
       },
       {
@@ -916,5 +1278,33 @@
         "sla_hours": 72
       }
     ]
+  },
+  "agent_renames": {
+    "date": "2026-11-01",
+    "approval": "Jim 2026-11-01 11:59 AM PT: 'i approve all 8 suggestions' (relayed by Larry)",
+    "renames": {
+      "FTE Apply": "Job Search",
+      "Investment": "Consulting",
+      "Marketing": "Content Studio",
+      "Sales": "OAWJ Shop",
+      "Expense Manager": "Books",
+      "Travel": "Travel & Personal"
+    },
+    "merged_into": {
+      "Stills & Clips": "Content Studio",
+      "SEO Auditor": "Content Studio",
+      "Subscription Cleaner": "Books",
+      "Disk Saver": "Admin"
+    },
+    "merged_seat_ids": {
+      "Stills & Clips": "ca62e4bf-ae28-4748-a4b6-5c016f0a83cd",
+      "SEO Auditor": "624476b9-0878-48cd-ae81-00a0d6e08e00",
+      "Subscription Cleaner": "b5b207f9-7281-423f-a743-3aba78cb1176",
+      "Disk Saver": "dff6c0dd-91f2-42eb-9cac-c27e7381defa"
+    },
+    "pending": {
+      "Ops": "retire after one clean week (~2026-11-08)",
+      "ex wife watch": "waiting on Jim's one-liner"
+    }
   }
 }
