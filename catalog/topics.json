@@ -378,7 +378,8 @@
       "description": "Fedora GE tracker+canvas reconciled after submit/reject",
       "publishers": [
         "Admin",
-        "agent-bus-hook"
+        "agent-bus-hook",
+        "Job Search"
       ],
       "subscribers": [
         "Admin"
@@ -1139,7 +1140,7 @@
     }
   },
   "updated_at": "2026-11-02",
-  "updated_note": "2026-11-02: Consulting may publish jim.answer (Catalant/marketplace asks it owns). 2026-11-02: critic.pass.outbound Latah Dispatch/NIL site copy routes to North Idaho Labs (asset latah-dispatch*/news-latah* or lane nil/latah...), not the Admin default. 2026-11-02: Job Search may publish fte.hold_cleared and jim.answer (v8: job policy + holds moved to Job Search). 2026-11-02: household.trade_recorded (Books publishes household securities trades/tax events; capital gains, never income.earned or Unemployment gross; Jim via Larry). Earlier: 2026-11-01 roster v8 (Jim: 'i approve all 8 suggestions'): agent renames/merges with alias map so history resolves; new topics fte.response, fte.harvest, fte.filter_change, critic.revise, income.earned/paid, jim.ask/answer, learning.proposal/applied, shop.reply, marketplace.outcome, social.metrics, grant.submitted, site.deployed; NIL + NatureNet added; Markets/private agents exempt; on-request agents never flagged silent; Ops lanes moved, Ops exempt until retirement. Earlier: 2026-10-23 bus robustness (Jim): youtube.published + ui.cert_filed topics; coverage block (silent thresholds, expected downstream events); critic.pass.outbound lanes oawj_youtube/adobe_stock/oawj_licensing/oawj_sales/investment routed to owners; sender text fixed to contact@. Earlier: 2026-10-20 harness review: marketplace.pitch_submitted (BTG/EVONA/TrueBridge); critic.pass.outbound lane=marketplace->Investment, oawj_shop->Marketing",
+  "updated_note": "2026-11-02: Job Search may publish ge.synced (v8: weekday GE drift check moved to Job Search; routing/must_act unchanged). 2026-11-02: Consulting may publish jim.answer (Catalant/marketplace asks it owns). 2026-11-02: critic.pass.outbound Latah Dispatch/NIL site copy routes to North Idaho Labs (asset latah-dispatch*/news-latah* or lane nil/latah...), not the Admin default. 2026-11-02: Job Search may publish fte.hold_cleared and jim.answer (v8: job policy + holds moved to Job Search). 2026-11-02: household.trade_recorded (Books publishes household securities trades/tax events; capital gains, never income.earned or Unemployment gross; Jim via Larry). Earlier: 2026-11-01 roster v8 (Jim: 'i approve all 8 suggestions'): agent renames/merges with alias map so history resolves; new topics fte.response, fte.harvest, fte.filter_change, critic.revise, income.earned/paid, jim.ask/answer, learning.proposal/applied, shop.reply, marketplace.outcome, social.metrics, grant.submitted, site.deployed; NIL + NatureNet added; Markets/private agents exempt; on-request agents never flagged silent; Ops lanes moved, Ops exempt until retirement. Earlier: 2026-10-23 bus robustness (Jim): youtube.published + ui.cert_filed topics; coverage block (silent thresholds, expected downstream events); critic.pass.outbound lanes oawj_youtube/adobe_stock/oawj_licensing/oawj_sales/investment routed to owners; sender text fixed to contact@. Earlier: 2026-10-20 harness review: marketplace.pitch_submitted (BTG/EVONA/TrueBridge); critic.pass.outbound lane=marketplace->Investment, oawj_shop->Marketing",
   "agents": {
     "Admin": "fa50d9b1-127a-404a-81d2-7bf61b49e1fe",
     "Job Search": "a8926586-fbf3-4d6c-8f0a-790e65ead1bd",
