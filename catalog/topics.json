@@ -1079,10 +1079,38 @@
       ],
       "done_means": "Merged PR deployed and live URL checked.",
       "state_file": null
+    },
+    "household.trade_recorded": {
+      "description": "Books recorded a personal (household) securities trade or tax event, e.g. a stock sale with a realized capital gain/loss. HOUSEHOLD CAPITAL-GAINS ACTIVITY ONLY, NOT self-employment or business income: it must never be counted toward income.earned/income.paid, never in Unemployment's weekly gross earnings, and Unemployment must not treat it as self-employment gross. Tax-year (Schedule D / Form 8949) tracking only.",
+      "publishers": [
+        "Books"
+      ],
+      "subscribers": [
+        "Admin",
+        "Grok Bot"
+      ],
+      "must_act": [],
+      "required_refs": [
+        "symbol",
+        "shares",
+        "trade_date",
+        "proceeds_gross",
+        "gain",
+        "term",
+        "ledger_path"
+      ],
+      "optional_refs": [
+        "lots",
+        "fees",
+        "account"
+      ],
+      "done_means": "Row in the household securities ledger (/workspace/expenses/household_securities_<year>.csv); term is short or long; nothing written to revenue/income ledgers or Unemployment cert answers.",
+      "state_file": null,
+      "must_act_note": "FYI only (Jim via Larry 2026-11-02): Admin and Larry (Grok Bot) pull. Markets stays off the bus. Unemployment deliberately not subscribed: capital gains are not weekly gross earnings."
     }
   },
-  "updated_at": "2026-11-01",
-  "updated_note": "2026-11-01 roster v8 (Jim: 'i approve all 8 suggestions'): agent renames/merges with alias map so history resolves; new topics fte.response, fte.harvest, fte.filter_change, critic.revise, income.earned/paid, jim.ask/answer, learning.proposal/applied, shop.reply, marketplace.outcome, social.metrics, grant.submitted, site.deployed; NIL + NatureNet added; Markets/private agents exempt; on-request agents never flagged silent; Ops lanes moved, Ops exempt until retirement. Earlier: 2026-10-23 bus robustness (Jim): youtube.published + ui.cert_filed topics; coverage block (silent thresholds, expected downstream events); critic.pass.outbound lanes oawj_youtube/adobe_stock/oawj_licensing/oawj_sales/investment routed to owners; sender text fixed to contact@. Earlier: 2026-10-20 harness review: marketplace.pitch_submitted (BTG/EVONA/TrueBridge); critic.pass.outbound lane=marketplace->Investment, oawj_shop->Marketing",
+  "updated_at": "2026-11-02",
+  "updated_note": "2026-11-02: household.trade_recorded (Books publishes household securities trades/tax events; capital gains, never income.earned or Unemployment gross; Jim via Larry). Earlier: 2026-11-01 roster v8 (Jim: 'i approve all 8 suggestions'): agent renames/merges with alias map so history resolves; new topics fte.response, fte.harvest, fte.filter_change, critic.revise, income.earned/paid, jim.ask/answer, learning.proposal/applied, shop.reply, marketplace.outcome, social.metrics, grant.submitted, site.deployed; NIL + NatureNet added; Markets/private agents exempt; on-request agents never flagged silent; Ops lanes moved, Ops exempt until retirement. Earlier: 2026-10-23 bus robustness (Jim): youtube.published + ui.cert_filed topics; coverage block (silent thresholds, expected downstream events); critic.pass.outbound lanes oawj_youtube/adobe_stock/oawj_licensing/oawj_sales/investment routed to owners; sender text fixed to contact@. Earlier: 2026-10-20 harness review: marketplace.pitch_submitted (BTG/EVONA/TrueBridge); critic.pass.outbound lane=marketplace->Investment, oawj_shop->Marketing",
   "agents": {
     "Admin": "fa50d9b1-127a-404a-81d2-7bf61b49e1fe",
     "Job Search": "a8926586-fbf3-4d6c-8f0a-790e65ead1bd",
