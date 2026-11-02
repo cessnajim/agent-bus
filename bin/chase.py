@@ -52,7 +52,11 @@ def _ref_matches(actual, expected) -> bool:
         return any(_ref_matches(actual, e) for e in expected)
     if actual is None:
         return False
-    return str(actual).strip().lower() == str(expected).strip().lower()
+    a, e = str(actual).strip().lower(), str(expected).strip().lower()
+    # 2026-11-02: trailing '*' is a prefix match (e.g. asset "latah-dispatch*").
+    if e.endswith("*"):
+        return a.startswith(e[:-1])
+    return a == e
 
 
 def resolve_must_act(meta: dict, refs: dict | None, actor: str | None = None) -> list[str]:

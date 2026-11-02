@@ -215,6 +215,32 @@
       "must_act_rules": [
         {
           "when_refs": {
+            "asset": [
+              "latah-dispatch*",
+              "news-latah*"
+            ]
+          },
+          "must_act": [
+            "North Idaho Labs"
+          ]
+        },
+        {
+          "when_refs": {
+            "lane": [
+              "nil",
+              "north_idaho_labs",
+              "latah",
+              "latah_dispatch",
+              "news_latah",
+              "nil_site"
+            ]
+          },
+          "must_act": [
+            "North Idaho Labs"
+          ]
+        },
+        {
+          "when_refs": {
             "lane": [
               "dam",
               "listing",
@@ -264,7 +290,7 @@
           ]
         }
       ],
-      "must_act_note": "Asset owner lane only: Marketing (youtube/social/listing/dam/shorts/oawj_shop), Sales (outreach/email/exclusive...), Investment (marketplace/catalant/btg/evona/truebridge); unknown lane -> Admin routes. v7 (2026-10-23): lanes oawj_youtube/adobe_stock->Marketing, oawj_licensing/oawj_sales->Sales, investment->Investment were falling through to Admin.",
+      "must_act_note": "v8 (2026-11-02): Latah Dispatch / NIL site copy -> North Idaho Labs (owns the NIL sites; implements as a draft PR, Jim merges). Matched first by asset prefix latah-dispatch* / news-latah* (whatever lane Critic used, e.g. seo or content_studio), or lane nil/north_idaho_labs/latah/latah_dispatch/news_latah/nil_site. Content Studio (weekly Latah check + SEO, proposes the copy) pulls as subscriber. Previously these fell through to the Admin default. Owner names now: Content Studio (youtube/social/listing/dam/shorts/oawj_shop/adobe_stock), OAWJ Shop (outreach/email/exclusive/licensing/sales), Consulting (marketplace/catalant/btg/evona/truebridge/investment); unknown lane -> Admin routes. Asset owner lane only: Marketing (youtube/social/listing/dam/shorts/oawj_shop), Sales (outreach/email/exclusive...), Investment (marketplace/catalant/btg/evona/truebridge); unknown lane -> Admin routes. v7 (2026-10-23): lanes oawj_youtube/adobe_stock->Marketing, oawj_licensing/oawj_sales->Sales, investment->Investment were falling through to Admin.",
       "required_refs": [
         "lane",
         "packet_path",
@@ -1112,7 +1138,7 @@
     }
   },
   "updated_at": "2026-11-02",
-  "updated_note": "2026-11-02: Job Search may publish fte.hold_cleared and jim.answer (v8: job policy + holds moved to Job Search). 2026-11-02: household.trade_recorded (Books publishes household securities trades/tax events; capital gains, never income.earned or Unemployment gross; Jim via Larry). Earlier: 2026-11-01 roster v8 (Jim: 'i approve all 8 suggestions'): agent renames/merges with alias map so history resolves; new topics fte.response, fte.harvest, fte.filter_change, critic.revise, income.earned/paid, jim.ask/answer, learning.proposal/applied, shop.reply, marketplace.outcome, social.metrics, grant.submitted, site.deployed; NIL + NatureNet added; Markets/private agents exempt; on-request agents never flagged silent; Ops lanes moved, Ops exempt until retirement. Earlier: 2026-10-23 bus robustness (Jim): youtube.published + ui.cert_filed topics; coverage block (silent thresholds, expected downstream events); critic.pass.outbound lanes oawj_youtube/adobe_stock/oawj_licensing/oawj_sales/investment routed to owners; sender text fixed to contact@. Earlier: 2026-10-20 harness review: marketplace.pitch_submitted (BTG/EVONA/TrueBridge); critic.pass.outbound lane=marketplace->Investment, oawj_shop->Marketing",
+  "updated_note": "2026-11-02: critic.pass.outbound Latah Dispatch/NIL site copy routes to North Idaho Labs (asset latah-dispatch*/news-latah* or lane nil/latah...), not the Admin default. 2026-11-02: Job Search may publish fte.hold_cleared and jim.answer (v8: job policy + holds moved to Job Search). 2026-11-02: household.trade_recorded (Books publishes household securities trades/tax events; capital gains, never income.earned or Unemployment gross; Jim via Larry). Earlier: 2026-11-01 roster v8 (Jim: 'i approve all 8 suggestions'): agent renames/merges with alias map so history resolves; new topics fte.response, fte.harvest, fte.filter_change, critic.revise, income.earned/paid, jim.ask/answer, learning.proposal/applied, shop.reply, marketplace.outcome, social.metrics, grant.submitted, site.deployed; NIL + NatureNet added; Markets/private agents exempt; on-request agents never flagged silent; Ops lanes moved, Ops exempt until retirement. Earlier: 2026-10-23 bus robustness (Jim): youtube.published + ui.cert_filed topics; coverage block (silent thresholds, expected downstream events); critic.pass.outbound lanes oawj_youtube/adobe_stock/oawj_licensing/oawj_sales/investment routed to owners; sender text fixed to contact@. Earlier: 2026-10-20 harness review: marketplace.pitch_submitted (BTG/EVONA/TrueBridge); critic.pass.outbound lane=marketplace->Investment, oawj_shop->Marketing",
   "agents": {
     "Admin": "fa50d9b1-127a-404a-81d2-7bf61b49e1fe",
     "Job Search": "a8926586-fbf3-4d6c-8f0a-790e65ead1bd",
