@@ -1192,8 +1192,8 @@
     },
     "agents": {
       "Admin": {
-        "silent_days": 1,
-        "quiet_ok": "Publishes critic/ge/chase/backfill events daily."
+        "silent_days": 3,
+        "quiet_ok": "Roster v8: critic/ge/WS publishes moved to their owners; Admin publishes jim.answer default-closes, backfills, chase and the Friday learning.proposal, so quiet optimize days are normal (Admin optimize 2026-11-05)."
       },
       "Writing Critic": {
         "silent_days": 3,
