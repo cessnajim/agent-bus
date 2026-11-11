@@ -1137,10 +1137,40 @@
       "done_means": "Row in the household securities ledger (/workspace/expenses/household_securities_<year>.csv); term is short or long; nothing written to revenue/income ledgers or Unemployment cert answers.",
       "state_file": null,
       "must_act_note": "FYI only (Jim via Larry 2026-11-02): Admin and Larry (Grok Bot) pull. Markets stays off the bus. Unemployment deliberately not subscribed: capital gains are not weekly gross earnings."
+    },
+    "outcome.verdict": {
+      "description": "Outcome Critic decision verdict (PASS / REVISE / SKIP) on an outbound move with a counterparty (pitch, rate quote, apply/skip, negotiation), before Writing Critic checks wording",
+      "publishers": [
+        "Outcome Critic"
+      ],
+      "subscribers": [
+        "Admin",
+        "Writing Critic",
+        "Job Search",
+        "Consulting",
+        "OAWJ Shop",
+        "Content Studio",
+        "Social Media",
+        "North Idaho Labs",
+        "NatureNet"
+      ],
+      "must_act": [
+        "refs.requesting_agent"
+      ],
+      "must_act_note": "Wakes only the requesting lane; Writing Critic and others pull.",
+      "required_refs": [
+        "source_id",
+        "lane",
+        "requesting_agent",
+        "verdict",
+        "reason"
+      ],
+      "done_means": "Requesting lane acted on the verdict: PASS goes on to Writing Critic, REVISE is reworked and resubmitted, SKIP is dropped with a note. Verdicts feed the Friday learning review.",
+      "state_file": null
     }
   },
-  "updated_at": "2026-11-02",
-  "updated_note": "2026-11-02: Job Search may publish ge.synced (v8: weekday GE drift check moved to Job Search; routing/must_act unchanged). 2026-11-02: Consulting may publish jim.answer (Catalant/marketplace asks it owns). 2026-11-02: critic.pass.outbound Latah Dispatch/NIL site copy routes to North Idaho Labs (asset latah-dispatch*/news-latah* or lane nil/latah...), not the Admin default. 2026-11-02: Job Search may publish fte.hold_cleared and jim.answer (v8: job policy + holds moved to Job Search). 2026-11-02: household.trade_recorded (Books publishes household securities trades/tax events; capital gains, never income.earned or Unemployment gross; Jim via Larry). Earlier: 2026-11-01 roster v8 (Jim: 'i approve all 8 suggestions'): agent renames/merges with alias map so history resolves; new topics fte.response, fte.harvest, fte.filter_change, critic.revise, income.earned/paid, jim.ask/answer, learning.proposal/applied, shop.reply, marketplace.outcome, social.metrics, grant.submitted, site.deployed; NIL + NatureNet added; Markets/private agents exempt; on-request agents never flagged silent; Ops lanes moved, Ops exempt until retirement. Earlier: 2026-10-23 bus robustness (Jim): youtube.published + ui.cert_filed topics; coverage block (silent thresholds, expected downstream events); critic.pass.outbound lanes oawj_youtube/adobe_stock/oawj_licensing/oawj_sales/investment routed to owners; sender text fixed to contact@. Earlier: 2026-10-20 harness review: marketplace.pitch_submitted (BTG/EVONA/TrueBridge); critic.pass.outbound lane=marketplace->Investment, oawj_shop->Marketing",
+  "updated_at": "2026-11-11",
+  "updated_note": "Added outcome.verdict topic and registered Outcome Critic (Jim created the agent 2026-11-11).",
   "agents": {
     "Admin": "fa50d9b1-127a-404a-81d2-7bf61b49e1fe",
     "Job Search": "a8926586-fbf3-4d6c-8f0a-790e65ead1bd",
@@ -1156,7 +1186,8 @@
     "OAWJ Shop": "9c5fcb12-9a8e-42f3-b619-c7ccb804e3fd",
     "Ops": "bc44de8b-c063-4a99-96b3-a3dbc64ef963",
     "Travel & Personal": "34ff498e-f62a-48ec-bda8-8b8ea4a62ae4",
-    "Grok Bot": "bedb13fb-aecb-4e5a-840d-523a921d977a"
+    "Grok Bot": "bedb13fb-aecb-4e5a-840d-523a921d977a",
+    "Outcome Critic": "bae28d39-cde9-4038-94e1-b3ade4b591aa"
   },
   "agents_note": "Roster v8 (Jim 2026-11-01 'i approve all 8 suggestions'): canonical agent name -> agent id. Old names resolve through coverage.actor_aliases; see agent_renames for history.",
   "coverage": {
@@ -1192,8 +1223,8 @@
     },
     "agents": {
       "Admin": {
-        "silent_days": 3,
-        "quiet_ok": "Roster v8: critic/ge/WS publishes moved to their owners; Admin publishes jim.answer default-closes, backfills, chase and the Friday learning.proposal, so quiet optimize days are normal (Admin optimize 2026-11-05)."
+        "silent_days": 7,
+        "quiet_ok": "Roster v8: critic/ge/WS publishes moved to their owners; Admin publishes jim.answer default-closes, backfills, chase and the Friday learning.proposal, so quiet optimize days are normal (Admin optimize 2026-11-05). Window 7 days (weekly Friday learning.proposal is the only guaranteed Admin publish; Admin morning check 2026-11-11)."
       },
       "Writing Critic": {
         "silent_days": 3,
@@ -1264,6 +1295,12 @@
       "ex wife watch": {
         "exempt": true,
         "quiet_ok": "Private; off the bus."
+      },
+      "Outcome Critic": {
+        "silent_days": 14,
+        "on_request": true,
+        "since": "2026-11-11",
+        "quiet_ok": "Reviews decisions only when a lane asks; added to the bus 2026-11-11."
       }
     },
     "expected_downstream": [
