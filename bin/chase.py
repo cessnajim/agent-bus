@@ -59,7 +59,35 @@ def _ref_matches(actual, expected) -> bool:
     return a == e
 
 
-def resolve_must_act(meta: dict, refs: dict | None, actor: str | None = None) -> list[str]:
+def _alias_key(name) -> str:
+    return re.sub(r"[^a-z0-9]+", "", str(name).casefold())
+
+
+def _load_catalog_for_aliases() -> dict:
+    try:
+        return json.loads((bus_root() / "catalog" / "topics.json").read_text())
+    except Exception:
+        return {}
+
+
+def canonical_name(name, catalog: dict | None = None) -> str:
+    """Resolve a name through catalog agents + actor_aliases, case-insensitive (2026-11-11)."""
+    if name is None:
+        return ""
+    s = str(name).strip()
+    if not s:
+        return ""
+    cat = catalog if catalog is not None else _load_catalog_for_aliases()
+    cov = cat.get("coverage", {}) or {}
+    idx: dict[str, str] = {}
+    for n in set(cat.get("agents", {}) or {}) | set(cov.get("agents", {}) or {}):
+        idx[_alias_key(n)] = n
+    for alias, canon in (cov.get("actor_aliases", {}) or {}).items():
+        idx[_alias_key(alias)] = canon
+    return idx.get(_alias_key(s), s)
+
+
+def resolve_must_act(meta: dict, refs: dict | None, actor: str | None = None, catalog: dict | None = None) -> list[str]:
     """DM list for one event (pull-first bus, 2026-10-08).
 
     First must_act_rules entry whose when_refs all match wins; else must_act.
@@ -76,12 +104,15 @@ def resolve_must_act(meta: dict, refs: dict | None, actor: str | None = None) ->
             if when and all(_ref_matches(refs.get(k), v) for k, v in when.items()):
                 chosen = list(rule.get("must_act") or [])
                 break
+    cat = catalog if catalog is not None else _load_catalog_for_aliases()
+    actor_c = canonical_name(actor, cat) if actor else actor
     out: list[str] = []
     for name in chosen:
         if isinstance(name, str) and name.startswith("refs."):
             val = refs.get(name[5:])
             name = str(val).strip() if val not in (None, "") else ""
-        if name and name != actor and name not in out:
+        name = canonical_name(name, cat) if name else name
+        if name and name != actor_c and name not in out:
             out.append(name)
     return out
 

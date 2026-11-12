@@ -1167,10 +1167,33 @@
       ],
       "done_means": "Requesting lane acted on the verdict: PASS goes on to Writing Critic, REVISE is reworked and resubmitted, SKIP is dropped with a note. Verdicts feed the Friday learning review.",
       "state_file": null
+    },
+    "grant.outcome": {
+      "description": "Funder decision on a grant, pitch or registration (award, decline, invite, resubmit window)",
+      "publishers": [
+        "NatureNet",
+        "North Idaho Labs"
+      ],
+      "subscribers": [
+        "Admin",
+        "Books",
+        "Writing Critic",
+        "Grok Bot"
+      ],
+      "must_act": [],
+      "required_refs": [
+        "entity",
+        "program",
+        "submission",
+        "outcome",
+        "tracker"
+      ],
+      "done_means": "Decision email logged in the tracker with source path; Gmail archived if no reply is owed; next step (resubmit, accept, drop) named in refs or note.",
+      "state_file": null
     }
   },
   "updated_at": "2026-11-11",
-  "updated_note": "Added outcome.verdict topic and registered Outcome Critic (Jim created the agent 2026-11-11).",
+  "updated_note": "Added grant.outcome (NatureNet/NIL); must_act names resolve through catalog aliases case-insensitively.",
   "agents": {
     "Admin": "fa50d9b1-127a-404a-81d2-7bf61b49e1fe",
     "Job Search": "a8926586-fbf3-4d6c-8f0a-790e65ead1bd",
