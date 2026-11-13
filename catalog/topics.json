@@ -175,7 +175,7 @@
         "lane"
       ],
       "state_file": null,
-      "done_means": "Submit under standing apply-auth or Jim yes executed, or fte.park if blocked. Jim-held PASSes: prefer fte.park in the same turn (status=open, do_not_reprompt) so chase does not stall waiting for Jim. Chase proof is a later fte.submit or fte.park for the same company+source_id (or same packet_path); role-string mismatch alone must not stall. Master CV (company=master or source_id containing master) is not an application — excluded from chase stalls and submit-ready counts.",
+      "done_means": "Submit under standing apply-auth or Jim yes executed, or fte.park if blocked. Jim-held PASSes: prefer fte.park in the same turn (status=open, do_not_reprompt) so chase does not stall waiting for Jim. Chase proof is a later fte.submit or fte.park for the same company+source_id (or same packet_path); role-string mismatch alone must not stall. Master CV (company=master or source_id containing master) is not an application \u2014 excluded from chase stalls and submit-ready counts.",
       "chase": {
         "owner": "Job Search",
         "expect": [
@@ -1189,6 +1189,28 @@
         "tracker"
       ],
       "done_means": "Decision email logged in the tracker with source path; Gmail archived if no reply is owed; next step (resubmit, accept, drop) named in refs or note.",
+      "state_file": null
+    },
+    "site.pr_opened": {
+      "description": "Public site PR opened and awaiting Jim's merge decision (via Larry); not live. Note any deploy hazard until merged.",
+      "publishers": [
+        "North Idaho Labs",
+        "Content Studio",
+        "OAWJ Shop"
+      ],
+      "subscribers": [
+        "Admin",
+        "Grok Bot",
+        "Content Studio",
+        "OAWJ Shop",
+        "North Idaho Labs"
+      ],
+      "must_act": [],
+      "required_refs": [
+        "site",
+        "pr"
+      ],
+      "done_means": "PR is open, unmerged, and queued to Jim through Larry; site.deployed follows after merge and live check.",
       "state_file": null
     }
   },
