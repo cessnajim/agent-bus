@@ -1229,7 +1229,6 @@
     "Content Studio": "5d55b9e2-f9a6-45b0-8371-5254e17eb025",
     "Social Media": "0b44ceee-7329-4bd0-9c7f-2288abdd0782",
     "OAWJ Shop": "9c5fcb12-9a8e-42f3-b619-c7ccb804e3fd",
-    "Ops": "bc44de8b-c063-4a99-96b3-a3dbc64ef963",
     "Travel & Personal": "34ff498e-f62a-48ec-bda8-8b8ea4a62ae4",
     "Grok Bot": "bedb13fb-aecb-4e5a-840d-523a921d977a",
     "Outcome Critic": "bae28d39-cde9-4038-94e1-b3ade4b591aa"
@@ -1248,7 +1247,7 @@
       "investment": "Consulting",
       "marketing": "Content Studio",
       "sales": "OAWJ Shop",
-      "ops": "Ops",
+      "ops": "Admin",
       "admin": "Admin",
       "critic": "Writing Critic",
       "FTE Apply": "Job Search",
@@ -1264,7 +1263,8 @@
       "fte apply": "Job Search",
       "larry": "Grok Bot",
       "systems": "Admin",
-      "nil": "North Idaho Labs"
+      "nil": "North Idaho Labs",
+      "Ops": "Admin"
     },
     "agents": {
       "Admin": {
@@ -1326,8 +1326,8 @@
       },
       "Ops": {
         "exempt": true,
-        "retire_after": "2026-11-08",
-        "quiet_ok": "Lanes moved 2026-11-01 (job mail -> Job Search, verify clicks -> Consulting, shop/Stripe/deploy -> OAWJ Shop). Retire after one clean week."
+        "retired": "2026-11-13",
+        "quiet_ok": "RETIRED 2026-11-13 (Jim 5:26 PM PT via Larry: 'retire ops'). Lanes moved 2026-11-01: job mail -> Job Search, verify clicks -> Consulting, shop/Stripe/deploy -> OAWJ Shop. History resolves to Admin via alias."
       },
       "Markets": {
         "exempt": true,
@@ -1436,16 +1436,17 @@
       "Stills & Clips": "Content Studio",
       "SEO Auditor": "Content Studio",
       "Subscription Cleaner": "Books",
-      "Disk Saver": "Admin"
+      "Disk Saver": "Admin",
+      "Ops": "Admin (lanes split to Job Search, Consulting, OAWJ Shop)"
     },
     "merged_seat_ids": {
       "Stills & Clips": "ca62e4bf-ae28-4748-a4b6-5c016f0a83cd",
       "SEO Auditor": "624476b9-0878-48cd-ae81-00a0d6e08e00",
       "Subscription Cleaner": "b5b207f9-7281-423f-a743-3aba78cb1176",
-      "Disk Saver": "dff6c0dd-91f2-42eb-9cac-c27e7381defa"
+      "Disk Saver": "dff6c0dd-91f2-42eb-9cac-c27e7381defa",
+      "Ops": "bc44de8b-c063-4a99-96b3-a3dbc64ef963"
     },
     "pending": {
-      "Ops": "retire after one clean week (~2026-11-08)",
       "ex wife watch": "waiting on Jim's one-liner"
     }
   }

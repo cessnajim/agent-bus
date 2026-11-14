@@ -68,8 +68,8 @@ class MustAct(unittest.TestCase):
         self.assertEqual(dm("catalant.email_confirmed", {}, "Ops"), ["Consulting"])
 
     def test_legacy_catalog_falls_back_to_subscribers(self):
-        meta = {"subscribers": ["Admin", "Ops"]}
-        self.assertEqual(chase.resolve_must_act(meta, {}, "Admin"), ["Ops"])
+        meta = {"subscribers": ["Admin", "Books"]}
+        self.assertEqual(chase.resolve_must_act(meta, {}, "Admin"), ["Books"])
 
 
 class PublishStdout(unittest.TestCase):
