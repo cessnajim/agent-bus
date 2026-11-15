@@ -891,7 +891,7 @@ def build_stall_report(root: Path | None = None, now: datetime | None = None) ->
 def is_master_cv_pass(refs: dict) -> bool:
     """Master CV / template critic.pass — not an employment application owed submit."""
     refs = refs or {}
-    if values_match(refs.get("company"), "master"):
+    if norm(str(refs.get("company") or "")) in ("master", "masters"):
         return True
     sid = refs.get("source_id")
     if sid not in (None, "") and "master" in norm(str(sid)):
