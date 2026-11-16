@@ -91,9 +91,10 @@ RETURN coalesce(c.name, '') AS company, left(coalesce(s.role, s.name, s.uid),70)
 ORDER BY passes DESC LIMIT 20;
 
 // name: critic_pass_not_submitted
-// desc: FTE jobs with a Critic PASS but no submit, reject or open park on the bus (lost packets)
+// desc: FTE jobs with a Critic PASS but no submit, reject, park or closed do-not-submit on the bus (lost packets; source_id alias-safe)
 MATCH (cr:CriticReview)-[:PASSED]->(j:Job)-[:AT]->(c:Company)
-WHERE NOT EXISTS { MATCH (j)<-[:FOR]-(ap:Application) WHERE ap.status IN ['submitted','rejected','parked'] }
+WHERE NOT EXISTS { MATCH (j)<-[:FOR]-(ap:Application) WHERE ap.status IN ['submitted','rejected','parked','not_submitted'] }
+  AND NOT (j.source_id IS NOT NULL AND EXISTS { MATCH (j2:Job {source_id: j.source_id})<-[:FOR]-(ap2:Application) WHERE ap2.status IN ['submitted','rejected','parked','not_submitted'] })
 WITH j, c, max(cr.epoch) AS last_pass
 RETURN c.name AS company, left(j.role,60) AS role,
        toInteger((datetime().epochSeconds - last_pass)/86400) AS days_since_pass
