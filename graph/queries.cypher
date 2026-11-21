@@ -95,6 +95,9 @@ ORDER BY passes DESC LIMIT 20;
 MATCH (cr:CriticReview)-[:PASSED]->(j:Job)-[:AT]->(c:Company)
 WHERE NOT EXISTS { MATCH (j)<-[:FOR]-(ap:Application) WHERE ap.status IN ['submitted','rejected','parked','not_submitted'] }
   AND NOT (j.source_id IS NOT NULL AND EXISTS { MATCH (j2:Job {source_id: j.source_id})<-[:FOR]-(ap2:Application) WHERE ap2.status IN ['submitted','rejected','parked','not_submitted'] })
+  AND NOT EXISTS { MATCH (c3:Company)<-[:AT]-(j3:Job)<-[:FOR]-(ap3:Application) WHERE c3 <> c AND toLower(j3.role) = toLower(j.role)
+       AND (toLower(c3.name) STARTS WITH toLower(c.name) OR toLower(c.name) STARTS WITH toLower(c3.name))
+       AND ap3.status IN ['submitted','rejected','parked','not_submitted'] }
 WITH j, c, max(cr.epoch) AS last_pass
 RETURN c.name AS company, left(j.role,60) AS role,
        toInteger((datetime().epochSeconds - last_pass)/86400) AS days_since_pass
