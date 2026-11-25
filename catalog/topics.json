@@ -5,7 +5,8 @@
     "new_topic": "Admin only. Add when >=2 subscribers, recurring, and done_means is nameable. No mid-turn invention.",
     "mandate": "Publish is part of done for catalog topics. Day ledger audits jsonl vs reality and backfills misses.",
     "dms": "Pull-first (Jim 2026-10-08). After publish, DM only the agents in must_act (resolved by publish.py: first matching must_act_rules entry, else must_act; refs.<key> tokens resolve from event refs; the actor is dropped). subscribers is the pull list: everyone on it reads the bus on its own runs. Bus is source of truth; DMs are best-effort push. ws.short_of_target nudge and chase unchanged.",
-    "chase": "Primary (catalog owner; Grok Bot acts as Admin here) owns follow-through. Pull busctl stall, nudge the stall owner, publish chase.owed, verify the next bus event. A chat ack is not proof."
+    "chase": "Primary (catalog owner; Grok Bot acts as Admin here) owns follow-through. Pull busctl stall, nudge the stall owner, publish chase.owed, verify the next bus event. A chat ack is not proof.",
+    "admin_merge": "Jim 2026-11-25 ('as written'): an agent may merge a pull request without Jim when ALL hold: (1) it changes only instruction or housekeeping files (AGENTS.md, CLAUDE.md, .cursor/rules/, .mailmap, .gitignore, docs/); (2) one of Jim's own agents opened it; (3) it is mergeable with nothing failing; (4) it implements something Jim already approved in words. Everything else is Jim's: code, anything that changes what a site or tool does, results, deploys, and any case where one of the four is in doubt. Merge at the commit you checked and tell Jim what you merged. Old stale pull requests: read and recommend merge or close; Jim sees only the unclear ones. The project board marks condition 1 (admin: true in board.json; 'Admin' on tasks.html). Condition 4 is never automatic: cite Jim's words."
   },
   "follow_through": {
     "primary": "Admin",
@@ -1319,7 +1320,7 @@
     }
   },
   "updated_at": "2026-11-25",
-  "updated_note": "site.deployed now requires repo and commit (Jim 2026-11-25 'Apply all three'): ten November deploys named no pull request and five came from uncommitted local files. work.owed gains optional ref brief (Jim 2026-11-25 'Yes, one click'). work.owed and work.done (Jim 2026-11-25 'Now add the owed topic to the bus'): cross-platform owed work with a done GitHub can show; the project board checks it hourly. Earlier same day: Claude Code seat (Jim 2026-11-25 'Own seat'): may publish and pulls site.pr_opened and site.deployed; on_request coverage; pull-only, never must_act.",
+  "updated_note": "rules.admin_merge added (Jim 2026-11-25 'As written, do all three'). site.deployed now requires repo and commit (Jim 2026-11-25 'Apply all three'): ten November deploys named no pull request and five came from uncommitted local files. work.owed gains optional ref brief (Jim 2026-11-25 'Yes, one click'). work.owed and work.done (Jim 2026-11-25 'Now add the owed topic to the bus'): cross-platform owed work with a done GitHub can show; the project board checks it hourly. Earlier same day: Claude Code seat (Jim 2026-11-25 'Own seat'): may publish and pulls site.pr_opened and site.deployed; on_request coverage; pull-only, never must_act.",
   "agents": {
     "Admin": "fa50d9b1-127a-404a-81d2-7bf61b49e1fe",
     "Job Search": "a8926586-fbf3-4d6c-8f0a-790e65ead1bd",

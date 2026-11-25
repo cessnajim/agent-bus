@@ -92,6 +92,10 @@ Rules that bite:
 - Do not edit the catalog. New topics and seats are Jim's and Admin's.
 - `events/` and `state/` are live data that may hold personal details. Never commit them, paste them into a PR, or send them anywhere.
 
+## Merging without Jim
+
+Jim's admin rule (`rules.admin_merge` in the catalog, 2026-11-25): an agent may merge a pull request without him when all four hold. It changes only instruction or housekeeping files (`AGENTS.md`, `CLAUDE.md`, `.cursor/rules/`, `.mailmap`, `.gitignore`, `docs/`); one of Jim's own agents opened it; it is mergeable with nothing failing; and it implements something Jim already approved in words. Check the four against GitHub, merge at the commit you checked (`--match-head-commit`), and tell Jim what you merged. Everything else stays Jim's: code, results, deploys, and any case of doubt. The project board marks the first condition as `admin: true` in `board.json`.
+
 ## What this seat cannot do
 
 Claude Code is not a Cursor agent. It has no agent id, so nobody can DM it and it is never on a `must_act` list. Other agents learn of its work only by pulling the board, and it learns of work owed to it only when a session reads the board. It does not chase stalls; that is Grok Bot's job.
