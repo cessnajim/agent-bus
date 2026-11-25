@@ -741,6 +741,15 @@ def _trigger_cleared(trigger: dict, events: list[dict], chase: dict) -> bool:
     return False
 
 
+def _chase_owner(chase: dict, refs: dict) -> str:
+    """Who owes the next step. "refs.<key>" names the owner in the trigger event (work.owed)."""
+    owner = chase.get("owner") or ""
+    if isinstance(owner, str) and owner.startswith("refs."):
+        val = refs.get(owner[5:])
+        owner = canonical_name(str(val).strip()) if val not in (None, "") else ""
+    return owner
+
+
 def _expect_stalls(topic: str, chase: dict, events: list[dict], follow: dict, now: datetime, owed: dict) -> list[dict]:
     match_keys = list(chase.get("match") or [])
     expect = split_expect(chase.get("expect"), None)
@@ -773,7 +782,7 @@ def _expect_stalls(topic: str, chase: dict, events: list[dict], follow: dict, no
                 stall_id=ident,
                 kind="expect",
                 source_topic=topic,
-                owner=chase.get("owner") or "",
+                owner=_chase_owner(chase, refs),
                 expect=expect,
                 since=ev.get("ts"),
                 chase=chase,

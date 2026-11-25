@@ -1216,10 +1216,107 @@
       ],
       "done_means": "PR is open, unmerged, and queued to Jim through Larry; site.deployed follows after merge and live check.",
       "state_file": null
+    },
+    "work.owed": {
+      "description": "Work one agent or platform has taken on, or handed to another, with a done that GitHub can show (a merged pull request or a committed file). The cross-platform to-do list: Cursor agents, Grok Bot and Claude Code all use it.",
+      "publishers": [
+        "Admin",
+        "Grok Bot",
+        "North Idaho Labs",
+        "NatureNet",
+        "Content Studio",
+        "OAWJ Shop",
+        "Claude Code"
+      ],
+      "subscribers": [
+        "Admin",
+        "Grok Bot",
+        "North Idaho Labs",
+        "NatureNet",
+        "Content Studio",
+        "OAWJ Shop",
+        "Claude Code"
+      ],
+      "must_act": [
+        "refs.owner"
+      ],
+      "must_act_rules": [
+        {
+          "when_refs": {
+            "owner": [
+              "Claude Code",
+              "claude",
+              "claude-code",
+              "claude code"
+            ]
+          },
+          "must_act": []
+        }
+      ],
+      "must_act_note": "The owner is told. Claude Code has no agent id to DM, so work owed by Claude Code is pull-only: a Claude session reads it on its next bus check.",
+      "required_refs": [
+        "work_id",
+        "owner",
+        "repo",
+        "done"
+      ],
+      "optional_refs": [
+        "pr",
+        "path",
+        "branch",
+        "due",
+        "from"
+      ],
+      "state_file": null,
+      "done_means": "done=pr_merged: the pull request in refs.pr is merged. done=file_committed: refs.path exists in refs.repo on refs.branch (default branch when blank). The project board checks GitHub every hour and closes the item when GitHub shows it; saying so does not close it. repo is owner/name. One work_id per piece of work; republish the same work_id to change owner or due.",
+      "chase": {
+        "owner": "refs.owner",
+        "expect": [
+          "work.done"
+        ],
+        "match": [
+          "work_id"
+        ],
+        "debounce_minutes": 1440
+      }
+    },
+    "work.done": {
+      "description": "The owner's claim that a work.owed item is finished or dropped. A claim, not proof: the project board confirms it against GitHub.",
+      "publishers": [
+        "Admin",
+        "Grok Bot",
+        "North Idaho Labs",
+        "NatureNet",
+        "Content Studio",
+        "OAWJ Shop",
+        "Claude Code"
+      ],
+      "subscribers": [
+        "Admin",
+        "Grok Bot",
+        "North Idaho Labs",
+        "NatureNet",
+        "Content Studio",
+        "OAWJ Shop",
+        "Claude Code"
+      ],
+      "must_act": [],
+      "must_act_note": "Pull-only. Clears the chase for the same work_id.",
+      "required_refs": [
+        "work_id",
+        "owner",
+        "outcome"
+      ],
+      "optional_refs": [
+        "proof",
+        "reason"
+      ],
+      "state_file": null,
+      "done_means": "outcome=done: GitHub shows what the work.owed item named, and refs.proof links it. outcome=dropped: the work will not be done, and refs.reason says why. A work.done the board cannot confirm on GitHub is listed there as a claim GitHub does not back."
     }
   },
   "updated_at": "2026-11-25",
-  "updated_note": "Claude Code seat (Jim 2026-11-25 'Own seat'): may publish and pulls site.pr_opened and site.deployed; on_request coverage; pull-only, never must_act.",
+  "updated_note": "work.owed and work.done (Jim 2026-11-25 'Now add the owed topic to the bus'): cross-platform owed work with a done GitHub can show; the project board checks it hourly. Earlier same day: Claude Code seat (Jim 2026-11-25 'Own seat'): may publish and pulls site.pr_opened and site.deployed; on_request coverage; pull-only, never must_act.",
   "agents": {
     "Admin": "fa50d9b1-127a-404a-81d2-7bf61b49e1fe",
     "Job Search": "a8926586-fbf3-4d6c-8f0a-790e65ead1bd",

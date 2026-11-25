@@ -26,7 +26,7 @@ class ClaudeCodeSeat(unittest.TestCase):
             self.assertIn(NAME, T[topic]["subscribers"], topic)
 
     def test_publishes_nothing_else(self):
-        allowed = {"site.deployed", "site.pr_opened"}
+        allowed = {"site.deployed", "site.pr_opened", "work.owed", "work.done"}
         for topic, meta in T.items():
             if topic not in allowed:
                 self.assertNotIn(NAME, meta.get("publishers", []), topic)
@@ -35,7 +35,10 @@ class ClaudeCodeSeat(unittest.TestCase):
         for topic, meta in T.items():
             self.assertNotIn(NAME, meta.get("must_act", []), topic)
             for rule in meta.get("must_act_rules", []) or []:
-                self.assertNotIn(NAME, json.dumps(rule), topic)
+                # A rule may name the seat only to say nobody is DMed for it.
+                self.assertNotIn(NAME, rule.get("must_act", []), topic)
+                if NAME in json.dumps(rule.get("when_refs", {})):
+                    self.assertEqual(rule.get("must_act"), [], topic)
 
     def test_on_request_so_never_flagged_silent(self):
         self.assertTrue(CAT["coverage"]["agents"][NAME].get("on_request"))
