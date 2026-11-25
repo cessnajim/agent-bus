@@ -1094,12 +1094,14 @@
       "publishers": [
         "North Idaho Labs",
         "Content Studio",
-        "OAWJ Shop"
+        "OAWJ Shop",
+        "Claude Code"
       ],
       "subscribers": [
         "Admin",
         "Content Studio",
-        "OAWJ Shop"
+        "OAWJ Shop",
+        "Claude Code"
       ],
       "must_act": [],
       "required_refs": [
@@ -1196,14 +1198,16 @@
       "publishers": [
         "North Idaho Labs",
         "Content Studio",
-        "OAWJ Shop"
+        "OAWJ Shop",
+        "Claude Code"
       ],
       "subscribers": [
         "Admin",
         "Grok Bot",
         "Content Studio",
         "OAWJ Shop",
-        "North Idaho Labs"
+        "North Idaho Labs",
+        "Claude Code"
       ],
       "must_act": [],
       "required_refs": [
@@ -1214,8 +1218,8 @@
       "state_file": null
     }
   },
-  "updated_at": "2026-11-11",
-  "updated_note": "Added grant.outcome (NatureNet/NIL); must_act names resolve through catalog aliases case-insensitively.",
+  "updated_at": "2026-11-25",
+  "updated_note": "Claude Code seat (Jim 2026-11-25 'Own seat'): may publish and pulls site.pr_opened and site.deployed; on_request coverage; pull-only, never must_act.",
   "agents": {
     "Admin": "fa50d9b1-127a-404a-81d2-7bf61b49e1fe",
     "Job Search": "a8926586-fbf3-4d6c-8f0a-790e65ead1bd",
@@ -1231,9 +1235,10 @@
     "OAWJ Shop": "9c5fcb12-9a8e-42f3-b619-c7ccb804e3fd",
     "Travel & Personal": "34ff498e-f62a-48ec-bda8-8b8ea4a62ae4",
     "Grok Bot": "bedb13fb-aecb-4e5a-840d-523a921d977a",
-    "Outcome Critic": "bae28d39-cde9-4038-94e1-b3ade4b591aa"
+    "Outcome Critic": "bae28d39-cde9-4038-94e1-b3ade4b591aa",
+    "Claude Code": "claude-code-no-dm"
   },
-  "agents_note": "Roster v8 (Jim 2026-11-01 'i approve all 8 suggestions'): canonical agent name -> agent id. Old names resolve through coverage.actor_aliases; see agent_renames for history.",
+  "agents_note": "Roster v8 (Jim 2026-11-01 'i approve all 8 suggestions'): canonical agent name -> agent id. Old names resolve through coverage.actor_aliases; see agent_renames for history. Claude Code (Jim 2026-11-25 'Own seat'): Claude Code sessions on fedora; not a Cursor agent, so its value is not an agent id and it cannot be DMed. Pull-only: never put it in must_act.",
   "coverage": {
     "note": "Read by bin/busctl.py coverage and bin/bus_watchdog.py. silent_days = calendar days (business days when weekdays_only) a publisher may go without a real event before it is flagged. snooze_until (YYYY-MM-DD) mutes one agent. on_request=true: works only when asked, never flagged SILENT/NEVER. exempt=true: off the bus by design. quiet_ok explains why silence is normally fine. Admin owns this block.",
     "system_actors": [
@@ -1264,7 +1269,10 @@
       "larry": "Grok Bot",
       "systems": "Admin",
       "nil": "North Idaho Labs",
-      "Ops": "Admin"
+      "Ops": "Admin",
+      "claude": "Claude Code",
+      "claude code": "Claude Code",
+      "claude-code": "Claude Code"
     },
     "agents": {
       "Admin": {
@@ -1346,6 +1354,12 @@
         "on_request": true,
         "since": "2026-11-11",
         "quiet_ok": "Reviews decisions only when a lane asks; added to the bus 2026-11-11."
+      },
+      "Claude Code": {
+        "silent_days": 14,
+        "on_request": true,
+        "since": "2026-11-25",
+        "quiet_ok": "Works in sessions Jim starts; publishes only after a PR, merge or deploy it did itself."
       }
     },
     "expected_downstream": [
