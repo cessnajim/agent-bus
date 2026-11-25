@@ -1106,10 +1106,12 @@
       "must_act": [],
       "required_refs": [
         "site",
+        "repo",
+        "commit",
         "pr",
         "live_url"
       ],
-      "done_means": "Merged PR deployed and live URL checked.",
+      "done_means": "A commit GitHub has on the repository's default branch is live, and the live URL was checked. repo is owner/name; commit is the full sha that is live; pr is the pull request URL, or the word none with the reason in the note. Never deploy from uncommitted files. A change that is not a deploy (an organisation setting, DNS, a console change) is not site.deployed. The project board checks every commit against GitHub.",
       "state_file": null
     },
     "household.trade_recorded": {
@@ -1317,7 +1319,7 @@
     }
   },
   "updated_at": "2026-11-25",
-  "updated_note": "work.owed gains optional ref brief (Jim 2026-11-25 'Yes, one click'). work.owed and work.done (Jim 2026-11-25 'Now add the owed topic to the bus'): cross-platform owed work with a done GitHub can show; the project board checks it hourly. Earlier same day: Claude Code seat (Jim 2026-11-25 'Own seat'): may publish and pulls site.pr_opened and site.deployed; on_request coverage; pull-only, never must_act.",
+  "updated_note": "site.deployed now requires repo and commit (Jim 2026-11-25 'Apply all three'): ten November deploys named no pull request and five came from uncommitted local files. work.owed gains optional ref brief (Jim 2026-11-25 'Yes, one click'). work.owed and work.done (Jim 2026-11-25 'Now add the owed topic to the bus'): cross-platform owed work with a done GitHub can show; the project board checks it hourly. Earlier same day: Claude Code seat (Jim 2026-11-25 'Own seat'): may publish and pulls site.pr_opened and site.deployed; on_request coverage; pull-only, never must_act.",
   "agents": {
     "Admin": "fa50d9b1-127a-404a-81d2-7bf61b49e1fe",
     "Job Search": "a8926586-fbf3-4d6c-8f0a-790e65ead1bd",

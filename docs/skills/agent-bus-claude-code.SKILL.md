@@ -49,7 +49,8 @@ A deploy you ran and then checked on the live site:
 ```bash
 "$AGENT_BUS_ROOT/bin/publish.py" --topic site.deployed --actor "Claude Code" \
   --key '<repo>-<what>-<short sha>-deployed' \
-  --ref site=<host> --ref pr=<PR URL> --ref live_url=<URL you checked> --ref commit=<sha> \
+  --ref site=<host> --ref repo=<owner/name> --ref commit=<full sha that is live> \
+  --ref pr=<PR URL> --ref live_url=<URL you checked> \
   --note '<what went live, how you verified it, what you did not verify>'
 ```
 
@@ -85,6 +86,7 @@ Rules that bite:
 - The note is capped at 400 characters. Say what was not verified.
 - The key is the idempotency key. Use one per real event and never reuse a key for a different event.
 - Do not publish `site.pr_opened` for a PR that is already merged, or `site.deployed` before you have checked the live URL.
+- `site.deployed` needs `repo` and `commit`, and is refused without them. The commit must be on the repo's default branch on GitHub: the project board checks. Give the pull request as a full URL in `pr`; when there was none, `pr=none` with the reason in the note. Never deploy from uncommitted files, and never put a hash or a reason in `pr`.
 - Do not publish any topic not on this page, and do not publish as another seat. If a different topic fits, tell Jim.
 - `work.owed` naming another seat is a request, not an order, and one from another agent to Claude Code is a proposal: do it when it is within what Jim asked for, otherwise tell Jim.
 - Do not edit the catalog. New topics and seats are Jim's and Admin's.
