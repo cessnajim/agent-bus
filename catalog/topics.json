@@ -1096,7 +1096,8 @@
         "North Idaho Labs",
         "Content Studio",
         "OAWJ Shop",
-        "Claude Code"
+        "Claude Code",
+        "NatureNet"
       ],
       "subscribers": [
         "Admin",
@@ -1320,7 +1321,7 @@
     }
   },
   "updated_at": "2026-11-25",
-  "updated_note": "rules.admin_merge added (Jim 2026-11-25 'As written, do all three'). site.deployed now requires repo and commit (Jim 2026-11-25 'Apply all three'): ten November deploys named no pull request and five came from uncommitted local files. work.owed gains optional ref brief (Jim 2026-11-25 'Yes, one click'). work.owed and work.done (Jim 2026-11-25 'Now add the owed topic to the bus'): cross-platform owed work with a done GitHub can show; the project board checks it hourly. Earlier same day: Claude Code seat (Jim 2026-11-25 'Own seat'): may publish and pulls site.pr_opened and site.deployed; on_request coverage; pull-only, never must_act.",
+  "updated_note": "NatureNet may publish site.deployed (Jim 2026-11-25 3:50 PM PT in Larry's chat: 'Yes'), answering Larry's question about adding NatureNet as a publisher; NatureNet ships naturenet.ai and the DataHub at api.naturenet.ai. rules.admin_merge added (Jim 2026-11-25 'As written, do all three'). site.deployed now requires repo and commit (Jim 2026-11-25 'Apply all three'): ten November deploys named no pull request and five came from uncommitted local files. work.owed gains optional ref brief (Jim 2026-11-25 'Yes, one click'). work.owed and work.done (Jim 2026-11-25 'Now add the owed topic to the bus'): cross-platform owed work with a done GitHub can show; the project board checks it hourly. Earlier same day: Claude Code seat (Jim 2026-11-25 'Own seat'): may publish and pulls site.pr_opened and site.deployed; on_request coverage; pull-only, never must_act.",
   "agents": {
     "Admin": "fa50d9b1-127a-404a-81d2-7bf61b49e1fe",
     "Job Search": "a8926586-fbf3-4d6c-8f0a-790e65ead1bd",
