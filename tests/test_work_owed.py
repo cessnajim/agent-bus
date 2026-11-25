@@ -46,6 +46,10 @@ class Catalog(unittest.TestCase):
         self.assertEqual(T["work.owed"]["required_refs"], ["work_id", "owner", "repo", "done"])
         self.assertEqual(T["work.done"]["required_refs"], ["work_id", "owner", "outcome"])
 
+    def test_an_item_can_carry_a_brief(self):
+        self.assertIn("brief", T["work.owed"]["optional_refs"])
+        self.assertIn("The note is the brief", T["work.owed"]["done_means"])
+
     def test_done_is_something_github_can_show(self):
         text = T["work.owed"]["done_means"]
         for kind in ("pr_merged", "file_committed"):

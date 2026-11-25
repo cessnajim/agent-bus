@@ -1265,10 +1265,11 @@
         "path",
         "branch",
         "due",
-        "from"
+        "from",
+        "brief"
       ],
       "state_file": null,
-      "done_means": "done=pr_merged: the pull request in refs.pr is merged. done=file_committed: refs.path exists in refs.repo on refs.branch (default branch when blank). The project board checks GitHub every hour and closes the item when GitHub shows it; saying so does not close it. repo is owner/name. One work_id per piece of work; republish the same work_id to change owner or due.",
+      "done_means": "done=pr_merged: the pull request in refs.pr is merged. done=file_committed: refs.path exists in refs.repo on refs.branch (default branch when blank). The project board checks GitHub every hour and closes the item when GitHub shows it; saying so does not close it. repo is owner/name. One work_id per piece of work; republish the same work_id to change owner or due. The note is the brief: say what is wanted and what to leave alone, since the owner may work from it alone. refs.brief may name a longer brief file, as a path inside refs.repo.",
       "chase": {
         "owner": "refs.owner",
         "expect": [
@@ -1316,7 +1317,7 @@
     }
   },
   "updated_at": "2026-11-25",
-  "updated_note": "work.owed and work.done (Jim 2026-11-25 'Now add the owed topic to the bus'): cross-platform owed work with a done GitHub can show; the project board checks it hourly. Earlier same day: Claude Code seat (Jim 2026-11-25 'Own seat'): may publish and pulls site.pr_opened and site.deployed; on_request coverage; pull-only, never must_act.",
+  "updated_note": "work.owed gains optional ref brief (Jim 2026-11-25 'Yes, one click'). work.owed and work.done (Jim 2026-11-25 'Now add the owed topic to the bus'): cross-platform owed work with a done GitHub can show; the project board checks it hourly. Earlier same day: Claude Code seat (Jim 2026-11-25 'Own seat'): may publish and pulls site.pr_opened and site.deployed; on_request coverage; pull-only, never must_act.",
   "agents": {
     "Admin": "fa50d9b1-127a-404a-81d2-7bf61b49e1fe",
     "Job Search": "a8926586-fbf3-4d6c-8f0a-790e65ead1bd",
